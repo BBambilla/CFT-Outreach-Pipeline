@@ -1,11 +1,13 @@
 import React, { createContext, useContext, useState, ReactNode, useMemo } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import { Student, Sponsor, Interaction, EmailTemplate, Resource, SponsorStatus, PILELINE_STATUSES } from '../types';
+import { Student, Sponsor, Interaction, EmailTemplate, Resource, SponsorStatus, PILELINE_STATUSES, KnowledgeBaseFile, ViewType } from '../types';
 import { loadInitialData } from '../data/initialData';
 
 interface AppContextType {
   role: 'student' | 'coordinator';
   setRole: (role: 'student' | 'coordinator') => void;
+  currentView: ViewType;
+  setCurrentView: (view: ViewType) => void;
   currentUser: Student | null;
   setCurrentUser: (student: Student | null) => void;
   students: Student[];
@@ -13,6 +15,8 @@ interface AppContextType {
   interactions: Interaction[];
   templates: EmailTemplate[];
   resources: Resource[];
+  knowledgeBaseFiles: KnowledgeBaseFile[];
+  addKnowledgeBaseFile: (file: KnowledgeBaseFile) => void;
   updateSponsor: (id: string, data: Partial<Sponsor>) => void;
   addInteraction: (interaction: Omit<Interaction, 'id'>) => void;
 }
@@ -45,12 +49,14 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const { initialStudents, initialSponsors } = useMemo(() => loadInitialData(), []);
   
   const [role, setRole] = useState<'student' | 'coordinator'>('student');
+  const [currentView, setCurrentView] = useState<ViewType>('pipeline');
   const [students] = useState<Student[]>(initialStudents);
   const [currentUser, setCurrentUser] = useState<Student | null>(initialStudents[0] || null);
   const [sponsors, setSponsors] = useState<Sponsor[]>(initialSponsors);
   const [interactions, setInteractions] = useState<Interaction[]>([]);
   const [templates] = useState<EmailTemplate[]>(mockTemplates);
   const [resources] = useState<Resource[]>(mockResources);
+  const [knowledgeBaseFiles, setKnowledgeBaseFiles] = useState<KnowledgeBaseFile[]>([]);
 
   const updateSponsor = (id: string, data: Partial<Sponsor>) => {
     setSponsors(prev => prev.map(s => s.id === id ? { ...s, ...data } : s));
@@ -60,11 +66,16 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     setInteractions(prev => [{ ...interaction, id: uuidv4() }, ...prev]);
   };
 
+  const addKnowledgeBaseFile = (file: KnowledgeBaseFile) => {
+    setKnowledgeBaseFiles(prev => [file, ...prev]);
+  };
+
   return (
     <AppContext.Provider value={{
       role, setRole,
+      currentView, setCurrentView,
       currentUser, setCurrentUser,
-      students, sponsors, interactions, templates, resources,
+      students, sponsors, interactions, templates, resources, knowledgeBaseFiles, addKnowledgeBaseFile,
       updateSponsor, addInteraction
     }}>
       {children}

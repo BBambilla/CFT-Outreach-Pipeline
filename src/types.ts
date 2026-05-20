@@ -74,3 +74,14 @@ export interface Resource {
   pinned: boolean; // false
   requiredReading: boolean; // false
 }
+
+export interface KnowledgeBaseFile {
+  id: string;
+  title: string;
+  url?: string;
+  uploadedAt: string;
+  size?: number; // Size in bytes
+  type?: string;
+}
+
+export type ViewType = 'pipeline' | 'knowledgeBase';

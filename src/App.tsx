@@ -8,15 +8,20 @@ import { AppProvider, useAppContext } from './context/AppContext';
 import { Navigation } from './components/Navigation';
 import { StudentHome } from './components/StudentHome';
 import { CoordinatorDashboard } from './components/CoordinatorDashboard';
+import { KnowledgeBase } from './components/KnowledgeBase';
 
 const AppContent: React.FC = () => {
-  const { role } = useAppContext();
+  const { role, currentView } = useAppContext();
   
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans">
       <Navigation />
       <main>
-        {role === 'student' ? <StudentHome /> : <CoordinatorDashboard />}
+        {currentView === 'knowledgeBase' ? (
+           <KnowledgeBase />
+        ) : (
+          role === 'student' ? <StudentHome /> : <CoordinatorDashboard />
+        )}
       </main>
     </div>
   );

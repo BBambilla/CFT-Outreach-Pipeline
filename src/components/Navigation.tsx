@@ -3,7 +3,7 @@ import { useAppContext } from '../context/AppContext';
 import { Layers, Presentation, Compass, Users } from 'lucide-react';
 
 export const Navigation: React.FC = () => {
-  const { role, setRole, currentUser, students, setCurrentUser } = useAppContext();
+  const { role, setRole, currentUser, students, setCurrentUser, currentView, setCurrentView } = useAppContext();
 
   return (
     <nav className="fixed top-0 w-full bg-white border-b border-slate-200 z-50 h-16 shrink-0">
@@ -14,12 +14,18 @@ export const Navigation: React.FC = () => {
             <span className="font-bold text-xl tracking-tight text-slate-800 mr-8 font-heading">CFT Sponsor Outreach</span>
             
             <div className="hidden sm:flex sm:space-x-4">
-              <a href="#" className="text-slate-800 bg-slate-100 px-3 py-2 rounded-md text-sm font-medium">
+              <button 
+                onClick={() => setCurrentView('pipeline')}
+                className={`${currentView === 'pipeline' ? 'text-slate-800 bg-slate-100' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'} px-3 py-2 rounded-md text-sm font-medium transition-colors`}
+              >
                 Pipeline
-              </a>
-              <a href="#" className="text-slate-500 hover:bg-slate-50 hover:text-slate-700 px-3 py-2 rounded-md text-sm font-medium transition-colors">
+              </button>
+              <button 
+                onClick={() => setCurrentView('knowledgeBase')}
+                className={`${currentView === 'knowledgeBase' ? 'text-slate-800 bg-slate-100' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'} px-3 py-2 rounded-md text-sm font-medium transition-colors`}
+              >
                 Knowledge Base
-              </a>
+              </button>
             </div>
           </div>
           
