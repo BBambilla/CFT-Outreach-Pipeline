@@ -1,0 +1,25 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Futura Medium", "Futura", "Gill Sans", "Arial", sans-serif;
+  --font-heading: "Futura Bold", "Futura", "Gill Sans Bold", "Arial Black", sans-serif;
+  
+  --color-brand-yellow: #F2AE0E;
+  --color-brand-orange: #E4531F;
+  --color-brand-canary: #F8D404;
+  
+  --color-sdg-blue: #10496B;
+  --color-sdg-green: #4B9F45;
+  --color-code-red: #C4202D;
+}
+
+@layer utilities {
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
+
