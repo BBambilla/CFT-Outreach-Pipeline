@@ -20,6 +20,12 @@ export const SponsorDetailModal: React.FC<{ sponsorId: string, onClose: () => vo
   const [researchSteps, setResearchSteps] = useState<string[]>([]);
   const [isResearching, setIsResearching] = useState(false);
 
+  const [newActivityType, setNewActivityType] = useState('Call');
+  const [newActivityDetails, setNewActivityDetails] = useState('');
+
+  const [newFileType, setNewFileType] = useState('File sent');
+  const [newFileName, setNewFileName] = useState('');
+
   if (!sponsor) return null;
 
   const relevantResources = resources.filter(r => r.tags.includes(sponsor.status));
@@ -325,20 +331,137 @@ export const SponsorDetailModal: React.FC<{ sponsorId: string, onClose: () => vo
               )}
 
               {activeTab === 'Activity log' && (
-                <div className="space-y-6 absolute left-6 border-l border-gray-200 ml-4 py-2">
-                  {sponsorInteractions.length === 0 ? (
-                    <div className="text-sm text-gray-500 italic ml-4">No interactions yet.</div>
-                  ) : (
-                    sponsorInteractions.map(interaction => (
-                      <div key={interaction.id} className="relative pl-6 pb-2">
-                        <div className="absolute w-2 h-2 bg-blue-500 rounded-full -left-[5px] top-1.5 ring-4 ring-white"></div>
-                        <div className="text-xs text-gray-500 mb-0.5">{new Date(interaction.date).toLocaleDateString()} • {interaction.type}</div>
-                        <div className="text-sm text-gray-800 bg-gray-50 border border-gray-100 rounded p-2.5 mt-1">
-                          {interaction.summary}
-                        </div>
+                <div className="space-y-6">
+                  <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+                    <h3 className="text-sm font-semibold text-slate-800 font-heading mb-3">Log New Activity</h3>
+                    <div className="flex flex-col gap-3">
+                      <div>
+                        <label className="block text-xs font-medium text-slate-500 mb-1">Activity Type</label>
+                        <select 
+                          value={newActivityType}
+                          onChange={(e) => setNewActivityType(e.target.value)}
+                          className="w-full text-sm border border-slate-200 rounded-md p-2 bg-white focus:outline-none focus:ring-1 focus:border-brand-orange"
+                        >
+                          <option value="Call">Call</option>
+                          <option value="Text">Text</option>
+                          <option value="Email sent">Email sent</option>
+                          <option value="Email received">Email received</option>
+                          <option value="Online Meeting">Online Meeting</option>
+                          <option value="Face-to-Face Meeting">Face-to-Face Meeting</option>
+                          <option value="LinkedIn">LinkedIn</option>
+                          <option value="Note">Other Note</option>
+                        </select>
                       </div>
-                    ))
-                  )}
+                      <div>
+                        <label className="block text-xs font-medium text-slate-500 mb-1">Details (Summary)</label>
+                        <textarea
+                          placeholder="What was discussed or done?"
+                          value={newActivityDetails}
+                          onChange={(e) => setNewActivityDetails(e.target.value)}
+                          rows={2}
+                          className="w-full text-sm text-slate-900 border border-slate-200 rounded-md p-2 focus:outline-none focus:ring-1 focus:border-brand-orange"
+                        ></textarea>
+                      </div>
+                      <div className="flex justify-end">
+                        <button
+                          disabled={!newActivityDetails}
+                          onClick={() => {
+                            addInteraction({
+                              sponsorId,
+                              type: newActivityType as any,
+                              date: new Date().toISOString(),
+                              summary: newActivityDetails
+                            });
+                            setNewActivityDetails('');
+                            setNewActivityType('Call');
+                          }}
+                          className="bg-brand-orange text-white px-4 py-1.5 rounded text-sm font-semibold font-heading hover:bg-orange-700 disabled:opacity-50 transition-colors"
+                        >
+                          Add Activity
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="relative border-l border-slate-200 ml-4 py-2">
+                    {sponsorInteractions.length === 0 ? (
+                      <div className="text-sm text-slate-500 italic ml-4">No interactions yet.</div>
+                    ) : (
+                      sponsorInteractions.map(interaction => (
+                        <div key={interaction.id} className="relative pl-6 pb-6 last:pb-2">
+                          <div className="absolute w-2.5 h-2.5 bg-brand-orange rounded-full -left-[5px] top-1.5 ring-4 ring-white"></div>
+                          <div className="text-xs font-bold text-slate-500 mb-0.5 tracking-wide">{new Date(interaction.date).toLocaleDateString()} • {interaction.type}</div>
+                          <div className="text-sm text-slate-700 bg-slate-50 border border-slate-100 rounded-lg p-3 mt-1.5 shadow-sm">
+                            {interaction.summary}
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {activeTab === 'Files' && (
+                <div className="space-y-6">
+                  <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+                    <h3 className="text-sm font-semibold text-slate-800 font-heading mb-3">Log File Sent or Received</h3>
+                    <div className="flex flex-col gap-3">
+                      <div>
+                        <label className="block text-xs font-medium text-slate-500 mb-1">Action</label>
+                        <select 
+                          value={newFileType}
+                          onChange={(e) => setNewFileType(e.target.value)}
+                          className="w-full text-sm border border-slate-200 rounded-md p-2 bg-white focus:outline-none focus:ring-1 focus:border-brand-orange"
+                        >
+                          <option value="File sent">File sent</option>
+                          <option value="File received">File received</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-slate-500 mb-1">File Name or Details</label>
+                        <input
+                          type="text"
+                          placeholder="e.g., Sponsorship Package.pdf"
+                          value={newFileName}
+                          onChange={(e) => setNewFileName(e.target.value)}
+                          className="w-full text-sm text-slate-900 border border-slate-200 rounded-md p-2 focus:outline-none focus:ring-1 focus:border-brand-orange"
+                        />
+                      </div>
+                      <div className="flex justify-end">
+                        <button
+                          disabled={!newFileName}
+                          onClick={() => {
+                            addInteraction({
+                              sponsorId,
+                              type: newFileType as any,
+                              date: new Date().toISOString(),
+                              summary: newFileName
+                            });
+                            setNewFileName('');
+                          }}
+                          className="bg-brand-orange text-white px-4 py-1.5 rounded text-sm font-semibold font-heading hover:bg-orange-700 disabled:opacity-50 transition-colors"
+                        >
+                          Log File
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="relative border-l border-slate-200 ml-4 py-2">
+                    {sponsorInteractions.filter(i => i.type === 'File sent' || i.type === 'File received').length === 0 ? (
+                      <div className="text-sm text-slate-500 italic ml-4">No files logged yet.</div>
+                    ) : (
+                      sponsorInteractions.filter(i => i.type === 'File sent' || i.type === 'File received').map(interaction => (
+                        <div key={interaction.id} className="relative pl-6 pb-6 last:pb-2">
+                          <div className="absolute w-2.5 h-2.5 bg-blue-500 rounded-full -left-[5px] top-1.5 ring-4 ring-white"></div>
+                          <div className="text-xs font-bold text-slate-500 mb-0.5 tracking-wide">{new Date(interaction.date).toLocaleDateString()} • {interaction.type}</div>
+                          <div className="text-sm text-slate-700 bg-slate-50 border border-slate-100 rounded-lg p-3 mt-1.5 shadow-sm">
+                            {interaction.summary}
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
                 </div>
               )}
             </div>

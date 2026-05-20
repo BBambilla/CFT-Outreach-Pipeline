@@ -41,7 +41,7 @@ export const StudentHome: React.FC = () => {
         </div>
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
           <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Deadline</p>
-          <p className="text-2xl font-bold text-slate-800">8 Days</p>
+          <p className="text-2xl font-bold text-slate-800">6 Months</p>
         </div>
       </section>
 

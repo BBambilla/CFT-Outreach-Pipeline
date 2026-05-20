@@ -46,7 +46,7 @@ export interface Sponsor {
   createdAt: string;
 }
 
-export type InteractionType = 'Email sent' | 'Email received' | 'Call' | 'Meeting' | 'LinkedIn' | 'Note';
+export type InteractionType = 'Email sent' | 'Email received' | 'Call' | 'Text' | 'Online Meeting' | 'Face-to-Face Meeting' | 'LinkedIn' | 'Note' | 'File sent' | 'File received';
 
 export interface Interaction {
   id: string;
