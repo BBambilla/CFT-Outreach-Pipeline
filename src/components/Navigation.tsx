@@ -1,28 +1,36 @@
 import React from 'react';
 import { useAppContext } from '../context/AppContext';
-import { Layers, Presentation, Compass, Users } from 'lucide-react';
+import { Layers, Presentation, Compass, Users, LogOut } from 'lucide-react';
+import { Logo } from './Logo';
 
 export const Navigation: React.FC = () => {
-  const { role, setRole, currentUser, students, setCurrentUser, currentView, setCurrentView } = useAppContext();
+  const { role, setRole, currentUser, students, setCurrentUser, currentView, setCurrentView, setIsAuthenticated } = useAppContext();
+
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    // Optional: setCurrentUser can remain or be reset if you choose.
+  };
 
   return (
-    <nav className="fixed top-0 w-full bg-white border-b border-slate-200 z-50 h-16 shrink-0">
+    <nav className="fixed top-0 w-full bg-brand-yellow border-b border-yellow-600/30 z-50 h-16 shrink-0 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full">
         <div className="flex justify-between h-full items-center">
           <div className="flex items-center">
-            <div className="w-8 h-8 bg-brand-yellow rounded-full flex items-center justify-center text-white font-heading font-bold text-lg mr-3 shadow-sm">C</div>
-            <span className="font-bold text-xl tracking-tight text-slate-800 mr-8 font-heading">CFT Sponsor Outreach</span>
+            <div className="w-14 h-14 mr-3 flex-shrink-0 bg-white rounded-full flex items-center justify-center shadow-sm p-1">
+              <Logo className="w-full h-full" />
+            </div>
+            <span className="font-bold text-xl tracking-tight text-white mr-8 font-heading drop-shadow-sm">CFT Sponsor Outreach</span>
             
-            <div className="hidden sm:flex sm:space-x-4">
+            <div className="hidden sm:flex sm:space-x-4 border-l border-white/20 pl-6">
               <button 
                 onClick={() => setCurrentView('pipeline')}
-                className={`${currentView === 'pipeline' ? 'text-slate-800 bg-slate-100' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'} px-3 py-2 rounded-md text-sm font-medium transition-colors`}
+                className={`${currentView === 'pipeline' ? 'text-brand-orange bg-white' : 'text-white/90 hover:bg-white/20 hover:text-white'} px-3 py-2 rounded-md text-sm font-bold transition-colors`}
               >
                 Pipeline
               </button>
               <button 
                 onClick={() => setCurrentView('knowledgeBase')}
-                className={`${currentView === 'knowledgeBase' ? 'text-slate-800 bg-slate-100' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'} px-3 py-2 rounded-md text-sm font-medium transition-colors`}
+                className={`${currentView === 'knowledgeBase' ? 'text-brand-orange bg-white' : 'text-white/90 hover:bg-white/20 hover:text-white'} px-3 py-2 rounded-md text-sm font-bold transition-colors`}
               >
                 Knowledge Base
               </button>
@@ -30,31 +38,24 @@ export const Navigation: React.FC = () => {
           </div>
           
           <div className="flex items-center gap-4">
-            {role === 'student' && (
-              <select 
-                className="text-sm border border-slate-200 text-slate-600 rounded-md shadow-sm focus:border-brand-orange focus:ring-brand-orange px-3 py-1.5"
-                value={currentUser?.id}
-                onChange={(e) => setCurrentUser(students.find(s => s.id === e.target.value) || null)}
-              >
-                {students.map(s => (
-                  <option key={s.id} value={s.id}>{s.name}</option>
-                ))}
-              </select>
-            )}
-            <div className="flex bg-slate-100 p-1 rounded-lg border border-slate-200">
-              <button
-                onClick={() => setRole('student')}
-                className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-colors ${role === 'student' ? 'bg-white shadow-sm text-slate-900 border border-slate-200' : 'text-slate-500 hover:text-slate-700'}`}
-              >
-                Student
-              </button>
-              <button
-                onClick={() => setRole('coordinator')}
-                className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-colors ${role === 'coordinator' ? 'bg-white shadow-sm text-slate-900 border border-slate-200' : 'text-slate-500 hover:text-slate-700'}`}
-              >
-                Coordinator
-              </button>
+            <div className="text-right">
+              <div className="text-sm font-bold text-white tracking-tight drop-shadow-sm">
+                {role === 'student' ? currentUser?.name : 'Coordinator'}
+              </div>
+              <div className="text-xs text-white/80 font-medium">
+                {role === 'student' ? currentUser?.country : 'Global Overview'}
+              </div>
             </div>
+            <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center text-white border border-white/30 shadow-sm">
+              {role === 'coordinator' ? <Presentation size={18} /> : <Users size={18} />}
+            </div>
+            <button 
+              onClick={handleLogout}
+              className="ml-2 p-2 text-white/80 hover:text-white hover:bg-white/20 rounded-lg transition-colors"
+              title="Sign out"
+            >
+              <LogOut size={20} />
+            </button>
           </div>
         </div>
       </div>

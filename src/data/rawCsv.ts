@@ -295,13 +295,13 @@ Brenda GonzÃ¡lez Peraza,Cuba,Caribbean,2,Pura Vida,"• Wellness and community
 Brenda GonzÃ¡lez Peraza,Cuba,Caribbean,3,Gabi and Sofi,"• Child/family-focused local brand or activity provider named in the sponsor slide.
 • Good fit for children’s engagement and family outreach.
 • Can support workshops, visibility and local community connection.",,,info.gabisofi@cnadecorarte.com,52109090,,00:21:30, Phone lacks country code,,
-Jeanique Hypolite,Dominica,Caribbean,1,European Climate Foundation,"• Climate-focused philanthropic foundation.
+Jeanique Hypolite,Dominican Republic,Caribbean,1,European Climate Foundation,"• Climate-focused philanthropic foundation.
 • Strong fit for climate education and awareness-building.
 • Can support environmental learning with a credible climate-action link.",,,info@europeanclimate.org,+33 1 73 16 21 12,https://europeanclimate.org/contact/,00:43:00,,https://europeanclimate.org/contact/,Official European Climate Foundation contact page.
-Jeanique Hypolite,Dominica,Caribbean,2,Global Environment Facility (GEF Small Grants Programme),"• Provides small grants for community environmental projects.
+Jeanique Hypolite,Dominican Republic,Caribbean,2,Global Environment Facility (GEF Small Grants Programme),"• Provides small grants for community environmental projects.
 • Very strong fit for local climate, biodiversity and sustainability education.
 • Can fund grassroots activities with clear environmental outcomes.",,,gefsgp@undp.org,+1 646 781 4385,https://sgp.undp.org/index.php?Itemid=230&option=com_sgpcontacts&view=contacts,00:43:20,,https://sgp.undp.org/index.php?Itemid=230&option=com_sgpcontacts&view=contacts,Official GEF Small Grants Programme contact page.
-Jeanique Hypolite,Dominica,Caribbean,3,TUI Care Foundation,"• Tourism-linked foundation supporting communities, education and nature.
+Jeanique Hypolite,Dominican Republic,Caribbean,3,TUI Care Foundation,"• Tourism-linked foundation supporting communities, education and nature.
 • Good fit for responsible travel, youth learning and destination benefit.
 • Can connect the project with tourism-sector social impact.",,,info@tuicarefoundation.com,,https://tuicarefoundation.com/contact/,00:44:00,,https://tuicarefoundation.com/contact/,Official TUI Care Foundation contact page. Added website only.
 Blanca Martínez,Dominican Republic,Caribbean,1,Frank Rainieri & Grupo Puntacana / Fundación Puntacana,"• Tourism group/foundation linked to Punta Cana destination development.

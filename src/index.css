@@ -4,13 +4,15 @@
   --font-sans: "Futura Medium", "Futura", "Gill Sans", "Arial", sans-serif;
   --font-heading: "Futura Bold", "Futura", "Gill Sans Bold", "Arial Black", sans-serif;
   
-  --color-brand-yellow: #F2AE0E;
-  --color-brand-orange: #E4531F;
-  --color-brand-canary: #F8D404;
+  --color-brand-yellow: #E9A616;
+  --color-brand-orange: #E65124;
+  --color-brand-canary: #EFC01A;
   
-  --color-sdg-blue: #10496B;
-  --color-sdg-green: #4B9F45;
-  --color-code-red: #C4202D;
+  --color-brand-blue: #0F5B89;
+  --color-sdg-blue: #0F5B89;
+  --color-sdg-green: #4C9F38;
+  --color-code-red: #E5243B;
+  --color-brand-gray: #7A7A7A;
 }
 
 @layer utilities {

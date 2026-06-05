@@ -38,6 +38,7 @@ export interface Sponsor {
   website: string;
   rationale: string; // "Why Good Fit"
   sourceNotes: string;
+  classification?: 'Registry' | 'CFT Training' | 'Sponsorships';
   researchNotes: string;
   status: SponsorStatus;
   priority: 'High' | 'Medium' | 'Low';

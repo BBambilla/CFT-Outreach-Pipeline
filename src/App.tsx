@@ -9,10 +9,15 @@ import { Navigation } from './components/Navigation';
 import { StudentHome } from './components/StudentHome';
 import { CoordinatorDashboard } from './components/CoordinatorDashboard';
 import { KnowledgeBase } from './components/KnowledgeBase';
+import { Login } from './components/Login';
 
 const AppContent: React.FC = () => {
-  const { role, currentView } = useAppContext();
+  const { role, currentView, isAuthenticated } = useAppContext();
   
+  if (!isAuthenticated) {
+    return <Login />;
+  }
+
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans">
       <Navigation />

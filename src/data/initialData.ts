@@ -2,19 +2,32 @@ import Papa from 'papaparse';
 import { v4 as uuidv4 } from 'uuid';
 import { Student, Sponsor, SponsorStatus } from '../types';
 import { rawCsv } from './rawCsv';
+import { rawCoordinatorCsv } from './coordinatorCsv';
 
 export const loadInitialData = () => {
   const parsed = Papa.parse(rawCsv, { header: true, skipEmptyLines: true });
   const studentsMap = new Map<string, Student>();
   const sponsors: Sponsor[] = [];
 
+  // Add the Admin user
+  const adminId = 'student-admin';
+  studentsMap.set('Admin', {
+    id: adminId,
+    name: 'Admin',
+    email: 'admin@example.com',
+    country: 'Global',
+    continent: 'Global',
+  });
+
   parsed.data.forEach((row: any) => {
     const studentName = row['Student Name']?.trim();
     if (!studentName || studentName.startsWith('Countries') || studentName.startsWith('Students')) return;
 
     if (!studentsMap.has(studentName)) {
+      // Create a deterministic slug for the ID
+      const deterministicId = 'student-' + studentName.toLowerCase().replace(/[^a-z0-9]/g, '-');
       studentsMap.set(studentName, {
-        id: uuidv4(),
+        id: deterministicId,
         name: studentName,
         email: `${studentName.split(' ')[0].toLowerCase()}@example.com`,
         country: row['Country']?.trim() || '',
@@ -38,8 +51,10 @@ export const loadInitialData = () => {
 
     const status: SponsorStatus = (contactName && email) ? 'Ready to Contact' : 'To Research';
 
+    const sponsorId = 'sponsor-' + student.id + '-' + org.toLowerCase().replace(/[^a-z0-9]/g, '-');
+
     sponsors.push({
-      id: uuidv4(),
+      id: sponsorId,
       assignedStudentId: student.id,
       organization: org,
       contactName,
@@ -50,6 +65,42 @@ export const loadInitialData = () => {
       rationale,
       sourceNotes,
       researchNotes: onlineNotes,
+      status,
+      priority: 'Medium',
+      createdAt: new Date().toISOString(),
+    });
+  });
+
+  const parsedAdmin = Papa.parse(rawCoordinatorCsv, { header: true, skipEmptyLines: true });
+  
+  parsedAdmin.data.forEach((row: any) => {
+    const org = row['Organisation']?.trim();
+    if (!org) return;
+
+    const contactName = `${row['First Name']?.trim() || ''} ${row['Surname']?.trim() || ''}`.trim();
+    const email = row['Email']?.trim() || '';
+    const phone = row['Telephone']?.trim() || '';
+    const title = row['Title']?.trim() || '';
+    const website = row['Website']?.trim() || '';
+    const notes = row['Notes']?.trim() || '';
+    const linkedIn = row['LinkedIn']?.trim() || '';
+
+    const status: SponsorStatus = (contactName && email) ? 'Ready to Contact' : 'To Research';
+
+    const sponsorId = 'sponsor-admin-' + org.toLowerCase().replace(/[^a-z0-9]/g, '-');
+
+    sponsors.push({
+      id: sponsorId,
+      assignedStudentId: adminId,
+      organization: org,
+      contactName,
+      role: title,
+      email,
+      phone,
+      website,
+      rationale: linkedIn ? `LinkedIn: ${linkedIn}` : '',
+      sourceNotes: notes,
+      researchNotes: '',
       status,
       priority: 'Medium',
       createdAt: new Date().toISOString(),

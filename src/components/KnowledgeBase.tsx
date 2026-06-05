@@ -4,7 +4,7 @@ import { FileText, Download, Lock, Check } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 
 export const KnowledgeBase: React.FC = () => {
-  const { knowledgeBaseFiles, addKnowledgeBaseFile } = useAppContext();
+  const { knowledgeBaseFiles, addKnowledgeBaseFile, role } = useAppContext();
   
   const [isUploading, setIsUploading] = useState(false);
   const [password, setPassword] = useState('');
@@ -54,7 +54,7 @@ export const KnowledgeBase: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        <div className="md:col-span-2 space-y-4">
+        <div className={`${role === 'coordinator' ? 'md:col-span-2' : 'md:col-span-3'} space-y-4`}>
           <h2 className="text-xl font-heading font-bold text-slate-800 mb-4">Files & Documents</h2>
           
           {knowledgeBaseFiles.length === 0 ? (
@@ -88,9 +88,10 @@ export const KnowledgeBase: React.FC = () => {
           )}
         </div>
 
-        <div>
-          <h2 className="text-xl font-heading font-bold text-slate-800 mb-4">Upload</h2>
-          <div className="bg-white border border-slate-200 rounded-xl p-5">
+        {role === 'coordinator' && (
+          <div>
+            <h2 className="text-xl font-heading font-bold text-slate-800 mb-4">Upload</h2>
+            <div className="bg-white border border-slate-200 rounded-xl p-5">
             {!isAuthenticated ? (
               <form onSubmit={handlePasswordSubmit} className="space-y-4">
                 <div className="flex items-center gap-2 text-slate-600 mb-2">
@@ -111,7 +112,7 @@ export const KnowledgeBase: React.FC = () => {
                 </div>
                 <button
                   type="submit"
-                  className="w-full bg-slate-800 text-white px-4 py-2 rounded-md text-sm font-semibold transition-colors hover:bg-slate-700"
+                  className="w-full bg-brand-orange text-white px-4 py-2 rounded-md text-sm font-semibold transition-colors hover:bg-orange-700"
                 >
                   Verify
                 </button>
@@ -146,6 +147,7 @@ export const KnowledgeBase: React.FC = () => {
             )}
           </div>
         </div>
+        )}
       </div>
     </div>
   );
