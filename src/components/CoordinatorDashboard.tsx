@@ -1,17 +1,63 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useAppContext } from '../context/AppContext';
-import { PILELINE_STATUSES } from '../types';
+import { PILELINE_STATUSES, Sponsor } from '../types';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
-import { AlertTriangle, Clock, Trophy, Users, Plus, KanbanSquare, LayoutDashboard, ShieldAlert } from 'lucide-react';
+import { AlertTriangle, Clock, Trophy, Users, Plus, KanbanSquare, LayoutDashboard, ShieldAlert, Upload } from 'lucide-react';
 import { AddLeadModal } from './AddLeadModal';
 import { KanbanBoard } from './KanbanBoard';
 import { SponsorDetailModal } from './SponsorDetailModal';
+import Papa from 'papaparse';
+import { v4 as uuidv4 } from 'uuid';
 
 export const CoordinatorDashboard: React.FC = () => {
-  const { sponsors, students } = useAppContext();
+  const { sponsors, students, addBulkSponsors } = useAppContext();
   const [isAddingLead, setIsAddingLead] = useState(false);
   const [view, setView] = useState<'overview' | 'pipeline' | 'admin'>('overview');
   const [selectedSponsorId, setSelectedSponsorId] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    Papa.parse(file, {
+      header: true,
+      skipEmptyLines: true,
+      complete: (results) => {
+        const data = results.data as any[];
+        
+        const newSponsors: Sponsor[] = data.map(row => {
+          let orgName = row['Organisation'] || row['Organization'] || row['Name'] || 'Unknown Organization';
+          
+          return {
+            id: uuidv4(),
+            organization: orgName,
+            status: 'To Research',
+            contactName: row['First Name'] ? `${row['First Name']} ${row['Surname'] || ''}`.trim() : (row['Contact Name'] || ''),
+            role: row['Title'] || row['Role'] || '',
+            email: row['Email'] || '',
+            phone: row['Telephone'] || row['Phone'] || '',
+            website: row['Website'] || '',
+            classification: 'Sponsorships',
+            assignedStudentId: view === 'admin' ? 'student-admin' : 'unassigned',
+            rationale: row['Notes'] || '',
+            createdAt: new Date().toISOString()
+          };
+        });
+
+        if (newSponsors.length > 0) {
+          addBulkSponsors(newSponsors);
+        }
+        
+        if (fileInputRef.current) {
+          fileInputRef.current.value = '';
+        }
+      },
+      error: (error) => {
+        console.error('Error parsing CSV:', error);
+      }
+    });
+  };
 
   // 1. Funnel Chart Data
   const funnelData = PILELINE_STATUSES.map(status => ({
@@ -72,13 +118,30 @@ export const CoordinatorDashboard: React.FC = () => {
               Admin Leads
             </button>
           </div>
-          <button 
-            onClick={() => setIsAddingLead(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-brand-orange text-white rounded-lg text-sm font-semibold hover:bg-orange-700 transition-colors shadow-sm"
-          >
-            <Plus size={16} />
-            <span>New Lead</span>
-          </button>
+          <div className="flex gap-2">
+            <input 
+              type="file" 
+              accept=".csv" 
+              className="hidden" 
+              ref={fileInputRef} 
+              onChange={handleFileUpload} 
+            />
+            <button 
+              onClick={() => fileInputRef.current?.click()}
+              className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-lg text-sm font-semibold hover:bg-slate-50 transition-colors shadow-sm"
+              title="Upload CSV to current view"
+            >
+              <Upload size={16} />
+              <span>Upload CSV</span>
+            </button>
+            <button 
+              onClick={() => setIsAddingLead(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-brand-orange text-white rounded-lg text-sm font-semibold hover:bg-orange-700 transition-colors shadow-sm"
+            >
+              <Plus size={16} />
+              <span>New Lead</span>
+            </button>
+          </div>
         </div>
       </div>
 

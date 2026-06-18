@@ -1,10 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useAppContext } from '../context/AppContext';
-import { Layers, Presentation, Compass, Users, LogOut } from 'lucide-react';
+import { Layers, Presentation, Compass, Users, LogOut, LifeBuoy } from 'lucide-react';
 import { Logo } from './Logo';
+import { RequestSupportModal } from './RequestSupportModal';
 
 export const Navigation: React.FC = () => {
   const { role, setRole, currentUser, students, setCurrentUser, currentView, setCurrentView, setIsAuthenticated } = useAppContext();
+  const [isSupportModalOpen, setIsSupportModalOpen] = useState(false);
 
   const handleLogout = () => {
     setIsAuthenticated(false);
@@ -21,7 +23,7 @@ export const Navigation: React.FC = () => {
             </div>
             <span className="font-bold text-xl tracking-tight text-white mr-8 font-heading drop-shadow-sm">CFT Sponsor Outreach</span>
             
-            <div className="hidden sm:flex sm:space-x-4 border-l border-white/20 pl-6">
+            <div className="hidden sm:flex sm:space-x-4 border-l border-white/20 pl-6 h-full items-center">
               <button 
                 onClick={() => setCurrentView('pipeline')}
                 className={`${currentView === 'pipeline' ? 'text-brand-orange bg-white' : 'text-white/90 hover:bg-white/20 hover:text-white'} px-3 py-2 rounded-md text-sm font-bold transition-colors`}
@@ -34,18 +36,36 @@ export const Navigation: React.FC = () => {
               >
                 Knowledge Base
               </button>
+              {role === 'student' && (
+                <button
+                  onClick={() => setIsSupportModalOpen(true)}
+                  className="flex items-center gap-2 text-white/90 hover:bg-white/20 hover:text-white px-3 py-2 rounded-md text-sm font-bold transition-colors ml-2"
+                >
+                  <LifeBuoy size={16} />
+                  <span>Request Support</span>
+                </button>
+              )}
             </div>
           </div>
           
           <div className="flex items-center gap-4">
-            <div className="text-right">
+            <div className="text-right hidden md:block">
               <div className="text-sm font-bold text-white tracking-tight drop-shadow-sm">
-                {role === 'student' ? currentUser?.name : 'Coordinator'}
+                {role === 'student' ? currentUser?.name : (currentUser?.name || 'Coordinator')}
               </div>
               <div className="text-xs text-white/80 font-medium">
-                {role === 'student' ? currentUser?.country : 'Global Overview'}
+                {role === 'student' ? currentUser?.country : (currentUser ? 'Admin' : 'Global Overview')}
               </div>
             </div>
+            {role === 'student' && (
+              <button
+                onClick={() => setIsSupportModalOpen(true)}
+                title="Request Support"
+                className="md:hidden p-2 text-white/90 hover:bg-white/20 hover:text-white rounded-lg transition-colors"
+              >
+                <LifeBuoy size={20} />
+              </button>
+            )}
             <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center text-white border border-white/30 shadow-sm">
               {role === 'coordinator' ? <Presentation size={18} /> : <Users size={18} />}
             </div>
@@ -59,6 +79,9 @@ export const Navigation: React.FC = () => {
           </div>
         </div>
       </div>
+      {isSupportModalOpen && (
+        <RequestSupportModal onClose={() => setIsSupportModalOpen(false)} />
+      )}
     </nav>
   );
 };

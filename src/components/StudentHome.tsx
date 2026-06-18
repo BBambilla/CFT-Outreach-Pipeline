@@ -4,12 +4,14 @@ import { PILELINE_STATUSES, SponsorStatus, Sponsor } from '../types';
 import { KanbanBoard } from './KanbanBoard';
 import { SponsorDetailModal } from './SponsorDetailModal';
 import { AddLeadModal } from './AddLeadModal';
-import { Plus } from 'lucide-react';
+import { Plus, LifeBuoy } from 'lucide-react';
+import { RequestSupportModal } from './RequestSupportModal';
 
 export const StudentHome: React.FC = () => {
   const { sponsors, currentUser, students } = useAppContext();
   const [selectedSponsorId, setSelectedSponsorId] = useState<string | null>(null);
   const [isAddingLead, setIsAddingLead] = useState(false);
+  const [isSupportModalOpen, setIsSupportModalOpen] = useState(false);
 
   if (!currentUser) return null;
 
@@ -49,13 +51,22 @@ export const StudentHome: React.FC = () => {
       <section className="flex-1 flex flex-col mb-4">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-bold font-heading text-slate-800">My Pipeline</h2>
-          <button 
-            onClick={() => setIsAddingLead(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-brand-orange text-white rounded-lg text-sm font-semibold hover:bg-orange-700 transition-colors shadow-sm"
-          >
-            <Plus size={16} />
-            <span>New Lead</span>
-          </button>
+          <div className="flex gap-2">
+            <button 
+              onClick={() => setIsSupportModalOpen(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-white text-slate-700 border border-slate-300 rounded-lg text-sm font-semibold hover:bg-slate-50 transition-colors shadow-sm"
+            >
+              <LifeBuoy size={16} />
+              <span className="hidden sm:inline">Request Support</span>
+            </button>
+            <button 
+              onClick={() => setIsAddingLead(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-brand-orange text-white rounded-lg text-sm font-semibold hover:bg-orange-700 transition-colors shadow-sm"
+            >
+              <Plus size={16} />
+              <span>New Lead</span>
+            </button>
+          </div>
         </div>
         <KanbanBoard sponsors={countrySponsors} onSponsorClick={setSelectedSponsorId} />
       </section>
@@ -69,6 +80,10 @@ export const StudentHome: React.FC = () => {
           sponsorId={selectedSponsorId} 
           onClose={() => setSelectedSponsorId(null)} 
         />
+      )}
+
+      {isSupportModalOpen && (
+        <RequestSupportModal onClose={() => setIsSupportModalOpen(false)} />
       )}
     </div>
   );

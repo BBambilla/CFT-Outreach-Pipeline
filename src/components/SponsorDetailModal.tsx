@@ -4,7 +4,7 @@ import { Interaction, SponsorStatus } from '../types';
 import { X, Search, Sparkles, Send, FileText, ChevronRight, PenSquare, ArrowRight, Trash2 } from 'lucide-react';
 
 export const SponsorDetailModal: React.FC<{ sponsorId: string, onClose: () => void }> = ({ sponsorId, onClose }) => {
-  const { sponsors, updateSponsor, deleteSponsor, addInteraction, interactions, templates, resources, currentUser, students } = useAppContext();
+  const { sponsors, updateSponsor, deleteSponsor, addInteraction, interactions, templates, resources, currentUser, students, role } = useAppContext();
   const sponsor = sponsors.find(s => s.id === sponsorId);
   const sponsorInteractions = interactions.filter(i => i.sponsorId === sponsorId).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   
@@ -28,7 +28,7 @@ export const SponsorDetailModal: React.FC<{ sponsorId: string, onClose: () => vo
 
   if (!sponsor) return null;
 
-  const isOwner = sponsor.assignedStudentId === currentUser?.id;
+  const isOwner = sponsor.assignedStudentId === currentUser?.id || role === 'coordinator';
   const owner = students.find(s => s.id === sponsor.assignedStudentId);
 
   const relevantResources = resources.filter(r => r.tags.includes(sponsor.status));

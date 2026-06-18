@@ -7,6 +7,7 @@ export const Login: React.FC = () => {
   const { students, setRole, setCurrentUser, setIsAuthenticated } = useAppContext();
   
   const [loginMethod, setLoginMethod] = useState<'student' | 'coordinator'>('student');
+  const [coordinatorAccount, setCoordinatorAccount] = useState<'global' | 'olly'>('global');
   const [selectedStudentId, setSelectedStudentId] = useState<string>('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -34,12 +35,24 @@ export const Login: React.FC = () => {
 
   const handleCoordinatorLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    if (password !== 'coordinator2026') {
-      setError('Incorrect passcode for Coordinator. (Hint: coordinator2026)');
-      return;
+    if (coordinatorAccount === 'global') {
+      if (password !== 'coordinator2026') {
+        setError('Incorrect passcode for Coordinator. (Hint: coordinator2026)');
+        return;
+      }
+      setRole('coordinator');
+      setCurrentUser(null);
+      setIsAuthenticated(true);
+    } else if (coordinatorAccount === 'olly') {
+      if (password !== 'olly2026') {
+        setError('Incorrect password for Olly Wheatcroft.');
+        return;
+      }
+      setRole('coordinator');
+      const adminStudent = students.find(s => s.id === 'student-admin');
+      if (adminStudent) setCurrentUser(adminStudent);
+      setIsAuthenticated(true);
     }
-    setRole('coordinator');
-    setIsAuthenticated(true);
   };
 
   return (
@@ -117,12 +130,21 @@ export const Login: React.FC = () => {
           ) : (
             <form onSubmit={handleCoordinatorLogin} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Passcode</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Account</label>
+                <select
+                  value={coordinatorAccount}
+                  onChange={(e) => setCoordinatorAccount(e.target.value as any)}
+                  className="block w-full px-3 py-2.5 sm:text-sm border border-slate-300 rounded-lg focus:ring-brand-orange focus:border-brand-orange bg-white mb-4"
+                >
+                  <option value="global">Global Coordinator</option>
+                  <option value="olly">Admin (Olly Wheatcroft)</option>
+                </select>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Passcode / Password</label>
                 <input
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Enter anything to demo"
+                  placeholder={coordinatorAccount === 'olly' ? "Enter password" : "Enter passcode"}
                   className="block w-full px-3 py-2.5 sm:text-sm border border-slate-300 rounded-lg focus:ring-brand-orange focus:border-brand-orange"
                 />
               </div>

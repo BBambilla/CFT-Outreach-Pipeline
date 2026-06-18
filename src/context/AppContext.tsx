@@ -22,6 +22,7 @@ interface AppContextType {
   updateSponsor: (id: string, data: Partial<Sponsor>) => void;
   deleteSponsor: (id: string) => void;
   addSponsor: (sponsor: Sponsor) => void;
+  addBulkSponsors: (newSponsors: Sponsor[]) => void;
   addInteraction: (interaction: Omit<Interaction, 'id'>) => void;
 }
 
@@ -61,7 +62,18 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       if (stored) {
         const parsed = JSON.parse(stored);
         if (parsed && Array.isArray(parsed) && parsed.length > 0) {
-          return parsed;
+          const freshStudentMap = new Map<string, Student>(initialStudents.map(s => [s.id, s]));
+          
+          const mergedStudents = parsed.map((s: Student) => {
+             const freshStudent = freshStudentMap.get(s.id);
+             if (freshStudent) {
+               freshStudentMap.delete(s.id);
+               return { ...s, name: freshStudent.name, country: freshStudent.country, continent: freshStudent.continent };
+             }
+             return s;
+          });
+
+          return [...mergedStudents, ...Array.from(freshStudentMap.values())];
         }
       }
     } catch (e) {
@@ -141,6 +153,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     setSponsors(prev => [sponsor, ...prev]);
   };
 
+  const addBulkSponsors = (newSponsors: Sponsor[]) => {
+    setSponsors(prev => [...newSponsors, ...prev]);
+  };
+
   const deleteSponsor = (id: string) => {
     setSponsors(prev => prev.filter(s => s.id !== id));
   };
@@ -160,7 +176,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       currentView, setCurrentView,
       currentUser, setCurrentUser,
       students, sponsors, interactions, templates, resources, knowledgeBaseFiles, addKnowledgeBaseFile,
-      updateSponsor, deleteSponsor, addSponsor, addInteraction
+      updateSponsor, deleteSponsor, addSponsor, addBulkSponsors, addInteraction
     }}>
       {children}
     </AppContext.Provider>

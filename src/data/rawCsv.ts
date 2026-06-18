@@ -352,4 +352,46 @@ Junelle Lovelace,Trinidad and Tobago,Caribbean,2,National Gas Company of Trinida
 • Can provide national visibility and corporate support.",Corporate Social Investment Department / Public Relations Team,,info@ngc.co.tt,+1 (868) 636-4662; +1 (868) 636-4680,https://ngc.co.tt/business-centre/ngc-contributions/,00:59:00,,,
 Junelle Lovelace,Trinidad and Tobago,Caribbean,3,Shell Trinidad and Tobago,"• Energy company with social investment and sustainability commitments.
 • Good fit for education, community development and environmental awareness.
-• Can provide corporate funding and visibility.",Sponsorships & Donations Team / Social Investment Team,,communityfeedback@shell.com,+1 (868) 628-0888,www.shell.com.tt,01:00:00,,,`
+• Can provide corporate funding and visibility.",Sponsorships & Donations Team / Social Investment Team,,communityfeedback@shell.com,+1 (868) 628-0888,www.shell.com.tt,01:00:00,,,
+Vanna Sok,Cambodia,Asia,1,Jaya House River Park,"• Listed on the Targeting Member map for Siem Reap tourism businesses
+• Fit message from slide: strengthen the business and protect the destination
+• Fit message from slide: be recognized as a responsible brand and contribute to Siem Reap sustainability leadership",,,,,,02:00 / 02:30,"Extracted from Vanna - Cambodia video. The slide is titled 'Targeting Member', not 'Potential Sponsors'. Contact details were not shown.",,
+Vanna Sok,Cambodia,Asia,2,FCC Angkor by Avani,"• Listed on the Targeting Member map for Siem Reap tourism businesses
+• Fit message from slide: practical support, local chapter engagement and global connection to Climate Friendly Travel initiative
+• Fit message from slide: focus on action, measurement and impact",,,,,,02:00 / 02:30,"Extracted from Vanna - Cambodia video. The slide is titled 'Targeting Member', not 'Potential Sponsors'. Contact details were not shown.",,
+Vanna Sok,Cambodia,Asia,3,Shinta Mani Shack,"• Listed on the Targeting Member map for Siem Reap tourism businesses
+• Fit message from slide: strengthen the business and protect the destination
+• Fit message from slide: be recognized as a responsible brand and contribute to Siem Reap sustainability leadership",,,,,,02:00 / 02:30,"Extracted from Vanna - Cambodia video. The slide is titled 'Targeting Member', not 'Potential Sponsors'. Contact details were not shown.",,
+Vanna Sok,Cambodia,Asia,4,Park Hyatt Siem Reap,"• Listed on the Targeting Member map for Siem Reap tourism businesses
+• Fit message from slide: improve efficiency and cost saving
+• Fit message from slide: Climate Friendly Travel Club = partner for sustainable growth",,,,,,02:00 / 02:30,"Extracted from Vanna - Cambodia video. The slide is titled 'Targeting Member', not 'Potential Sponsors'. Contact details were not shown.",,
+Vanna Sok,Cambodia,Asia,5,Sala Lodges,"• Listed on the Targeting Member map for Siem Reap tourism businesses
+• Fit message from slide: local chapter engagement in Siem Reap
+• Fit message from slide: contribute to Siem Reap sustainability leadership",,,,,,02:00 / 02:30,"Extracted from Vanna - Cambodia video. The slide is titled 'Targeting Member', not 'Potential Sponsors'. Contact details were not shown.",,
+Vanna Sok,Cambodia,Asia,6,EXO Travel Cambodia,"• Listed on the Targeting Member map for Siem Reap tourism businesses
+• Fit message from slide: practical support, local chapter engagement and global connection to Climate Friendly Travel initiative
+• Fit message from slide: focus on action, measurement and impact",,,,,,02:00 / 02:30,"Extracted from Vanna - Cambodia video. The slide is titled 'Targeting Member', not 'Potential Sponsors'. Contact details were not shown.",,
+Gladys Nhangumele,Mozambique,Africa,1,UNICEF/UNESCO,"• Education
+• Curriculum
+• Child rights",,,,,,03:20,"Extracted from Gladys Nhangumele video. Sponsor box shows N/A for contact details.",,
+Gladys Nhangumele,Mozambique,Africa,2,Private Sector (CTA),"• Tourism integration
+• Gamification
+• Family travel",Esnarda Augusta,CTA,,,,03:20,"Extracted from Gladys Nhangumele video. The slide shows 'CTA – Esnarda Augusta'. No email, phone or website shown.",,
+Gladys Nhangumele,Mozambique,Africa,3,World Bank/ANAC,"• Financing
+• Conservation
+• Scaling",Manuel Mutimucio / Chantal Ridley; Eugenio Manhica,World Bank / ProBlue; ANAC,eugenio.manhica@anac.gov.mz,,,03:20,"Extracted from Gladys Nhangumele video. The slide shows World Bank – Manuel Mutimucio/Chantal Ridley (ProBlue) and ANAC – Eugenio Manhica with email.",,
+Delroy Servina,Seychelles,Africa,1,Four Seasons Seychelles,"• Large enterprise operating two large hotels in Seychelles
+• Committed to sustainable practices
+• Both of their properties are Sustainable Seychelles Certified",Nitin Abbi,,mary.bowens@fourseason.com; nitin.abbi@fourseasons.com; pavan.moolraj@fourseasons.com,+248 4393000,,00:10,"Extracted from Delroy video. Full surname was not visible in the slide; file name shows Delroy. Website not shown on slide.",,
+Delroy Servina,Seychelles,Africa,2,Creole Travel Services,"• Family owned Destination Management Company
+• Mindful company with Eco Tourism components included in their operation
+• Operates a Nature reserve as part of their sustainability practices",Mr. Guillaume Albert,,Guillaume.Albert@creoletravelservices.com,+248 4297000,,01:20,"Extracted from Delroy video. Website not shown on slide.",,
+Delroy Servina,Seychelles,Africa,3,UNDP Seychelles,"• Provides grants and funds to Climate Change resilient projects
+• Offers insights to Sustainability and climate resilience
+• Support Climate resilient projects in SIDS",Ms. Preethi Sushil Nair,,preethi.sushil@undp.org,+248 4322559,,02:30,"Extracted from Delroy video. Website not shown on slide.",,
+Lino Cassimo,Mozambique,Africa,1,BIOFUND,"• Sponsor focus shown on slide: climate change action
+• Aligns with CFT Mozambique Chapter Implementation theme",Mr. Ivandro Marcos,BIOFUND Board Member,isitoi@fdc.org.mz,,www.biofund.org.mz,00:00,"Extracted from Lino Cassimo video. Phone shown at bottom appears to be presenter contact, not sponsor phone.",,
+Lino Cassimo,Mozambique,Africa,2,African Parks,"• Sponsor focus shown on slide: tourism promotion
+• Aligns with CFT Mozambique Chapter Implementation theme",Mr. João Salomão,African Parks Country Rep,Joao_salomao@hotmail.com,,www.africanparks.org,00:00,"Extracted from Lino Cassimo video. Email appears with an underscore on the slide; verify before outreach. Phone shown at bottom appears to be presenter contact, not sponsor phone.",,
+Lino Cassimo,Mozambique,Africa,3,Ideialab,"• Sponsor focus shown on slide: youth & gender development
+• Aligns with CFT Mozambique Chapter Implementation theme",Ms. Sara Fakir,Ideialab Co-Founder,Sara.fakir@ideialab.biz,,www.ideialab.biz,00:00,"Extracted from Lino Cassimo video. Phone shown at bottom appears to be presenter contact, not sponsor phone.",,`

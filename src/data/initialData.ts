@@ -13,9 +13,9 @@ export const loadInitialData = () => {
   const adminId = 'student-admin';
   studentsMap.set('Admin', {
     id: adminId,
-    name: 'Admin',
-    email: 'admin@example.com',
-    country: 'Global',
+    name: 'Olly Wheatcroft',
+    email: 'olly@thesunprogram.com',
+    country: 'Admin',
     continent: 'Global',
   });
 
@@ -26,11 +26,12 @@ export const loadInitialData = () => {
     if (!studentsMap.has(studentName)) {
       // Create a deterministic slug for the ID
       const deterministicId = 'student-' + studentName.toLowerCase().replace(/[^a-z0-9]/g, '-');
+      const country = row['Country']?.trim() || '';
       studentsMap.set(studentName, {
         id: deterministicId,
         name: studentName,
-        email: `${studentName.split(' ')[0].toLowerCase()}@example.com`,
-        country: row['Country']?.trim() || '',
+        email: `${country.toLowerCase().replace(/\s+/g, '')}@thesunprogram.com`,
+        country: country,
         continent: row['Continent / Region']?.trim() || '',
       });
     }
