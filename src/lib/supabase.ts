@@ -1,24 +1,15 @@
+/// <reference types="vite/client" />
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
 export let supabase: SupabaseClient | null = null;
-let initPromise: Promise<boolean> | null = null;
+
+if (supabaseUrl && supabaseAnonKey) {
+  supabase = createClient(supabaseUrl, supabaseAnonKey);
+}
 
 export const initSupabase = (): Promise<boolean> => {
-  if (supabase) return Promise.resolve(true);
-  if (initPromise) return initPromise;
-  
-  initPromise = (async () => {
-    try {
-      const res = await fetch('/api/config');
-      const config = await res.json();
-      if (config.supabaseUrl && config.supabaseAnonKey) {
-        supabase = createClient(config.supabaseUrl, config.supabaseAnonKey);
-        return true;
-      }
-    } catch (err) {
-      console.error('Failed to fetch config', err);
-    }
-    return false;
-  })();
-  return initPromise;
+  return Promise.resolve(!!supabase);
 };

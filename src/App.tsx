@@ -55,7 +55,7 @@ export default function App() {
   }
 
   if (dbStatus === 'unconfigured') {
-    return <div className="min-h-screen flex font-medium items-center justify-center bg-red-50 text-red-600 text-lg">Database not configured (SUPABASE_URL and SUPABASE_ANON_KEY missing on server).</div>;
+    return <div className="min-h-screen flex font-medium items-center justify-center bg-red-50 text-red-600 text-lg text-center p-8">Database not configured (VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY missing).</div>;
   }
 
   return (
