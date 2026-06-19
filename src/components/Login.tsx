@@ -1,57 +1,84 @@
-import React, { useState } from 'react';
-import { useAppContext } from '../context/AppContext';
+import React, { useState, useEffect } from 'react';
 import { Compass, Users, MapPin } from 'lucide-react';
 import { Logo } from './Logo';
+import { supabase } from '../lib/supabase';
 
 export const Login: React.FC = () => {
-  const { students, setRole, setCurrentUser, setIsAuthenticated } = useAppContext();
-  
   const [loginMethod, setLoginMethod] = useState<'student' | 'coordinator'>('student');
   const [coordinatorAccount, setCoordinatorAccount] = useState<'global' | 'olly'>('global');
   const [selectedStudentId, setSelectedStudentId] = useState<string>('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [directory, setDirectory] = useState<{id: string, name: string, country: string}[]>([]);
+  const [isSigningIn, setIsSigningIn] = useState(false);
 
-  const handleStudentLogin = (e: React.FormEvent) => {
+  useEffect(() => {
+    const fetchDirectory = async () => {
+      if (!supabase) {
+        setError('Database client not initialized');
+        return;
+      }
+      const { data, error } = await supabase.from('login_directory').select('*');
+      if (error) {
+        setError('Failed to load rep list: ' + error.message);
+      } else if (data) {
+        const sorted = data.sort((a, b) => {
+          if (a.country < b.country) return -1;
+          if (a.country > b.country) return 1;
+          if (a.name < b.name) return -1;
+          if (a.name > b.name) return 1;
+          return 0;
+        });
+        setDirectory(sorted);
+      }
+    };
+    fetchDirectory();
+  }, []);
+
+  const handleStudentLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!supabase) return;
     if (!selectedStudentId) {
       setError('Please select your country.');
       return;
     }
     
-    const student = students.find(s => s.id === selectedStudentId);
-    if (!student) return;
+    setError('');
+    setIsSigningIn(true);
+    const email = `${selectedStudentId}@cft-app.local`;
 
-    const expectedPassword = `${student.country.toLowerCase().replace(/\s+/g, '')}2026`;
-    if (password !== expectedPassword) {
-      setError(`Incorrect password for ${student.country}. (Hint: ${expectedPassword})`);
-      return;
+    const { error: authError } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (authError) {
+      setError(authError.message);
+      setIsSigningIn(false);
     }
-    
-    setCurrentUser(student);
-    setRole('student');
-    setIsAuthenticated(true);
   };
 
-  const handleCoordinatorLogin = (e: React.FormEvent) => {
+  const handleCoordinatorLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!supabase) return;
+
+    setError('');
+    setIsSigningIn(true);
+    let email = '';
     if (coordinatorAccount === 'global') {
-      if (password !== 'coordinator2026') {
-        setError('Incorrect passcode for Coordinator. (Hint: coordinator2026)');
-        return;
-      }
-      setRole('coordinator');
-      setCurrentUser(null);
-      setIsAuthenticated(true);
+      email = 'pratishtha@cft-app.local';
     } else if (coordinatorAccount === 'olly') {
-      if (password !== 'olly2026') {
-        setError('Incorrect password for Olly Wheatcroft.');
-        return;
-      }
-      setRole('coordinator');
-      const adminStudent = students.find(s => s.id === 'student-admin');
-      if (adminStudent) setCurrentUser(adminStudent);
-      setIsAuthenticated(true);
+      email = 'olly@cft-app.local';
+    }
+
+    const { error: authError } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (authError) {
+      setError(authError.message);
+      setIsSigningIn(false);
     }
   };
 
@@ -98,9 +125,9 @@ export const Login: React.FC = () => {
                     className="block w-full pl-10 pr-3 py-2.5 sm:text-sm border border-slate-300 rounded-lg focus:ring-brand-orange focus:border-brand-orange bg-white"
                   >
                     <option value="" disabled>Select your country...</option>
-                    {[...students].filter(s => s.id !== 'student-admin').sort((a,b) => a.country.localeCompare(b.country)).map(student => (
-                      <option key={student.id} value={student.id}>
-                        {student.country} ({student.name})
+                    {directory.map(rep => (
+                      <option key={rep.id} value={rep.id}>
+                        {rep.country} ({rep.name})
                       </option>
                     ))}
                   </select>
@@ -122,9 +149,10 @@ export const Login: React.FC = () => {
               
               <button
                 type="submit"
-                className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-semibold text-white bg-brand-orange hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-orange transition-colors mt-6"
+                disabled={isSigningIn}
+                className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-semibold text-white bg-brand-orange hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-orange transition-colors mt-6 disabled:opacity-50"
               >
-                Sign In
+                {isSigningIn ? 'Signing in...' : 'Sign In'}
               </button>
             </form>
           ) : (
@@ -136,7 +164,7 @@ export const Login: React.FC = () => {
                   onChange={(e) => setCoordinatorAccount(e.target.value as any)}
                   className="block w-full px-3 py-2.5 sm:text-sm border border-slate-300 rounded-lg focus:ring-brand-orange focus:border-brand-orange bg-white mb-4"
                 >
-                  <option value="global">Global Coordinator</option>
+                  <option value="global">Admin (Pratishtha Parajuli)</option>
                   <option value="olly">Admin (Olly Wheatcroft)</option>
                 </select>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Passcode / Password</label>
@@ -153,9 +181,10 @@ export const Login: React.FC = () => {
               
               <button
                 type="submit"
-                className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-semibold text-white bg-brand-orange hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-orange transition-colors mt-6"
+                disabled={isSigningIn}
+                className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-semibold text-white bg-brand-orange hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-orange transition-colors mt-6 disabled:opacity-50"
               >
-                Sign In as Coordinator
+                {isSigningIn ? 'Signing in...' : 'Sign In as Coordinator'}
               </button>
             </form>
           )}

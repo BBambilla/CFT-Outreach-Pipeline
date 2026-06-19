@@ -16,7 +16,8 @@ export type SponsorStatus =
   | 'Contacted'
   | 'In Conversation'
   | 'Committed'
-  | 'Declined / No Response';
+  | 'Registered / Enrolled'
+  | 'Declined';
 
 export const PILELINE_STATUSES: SponsorStatus[] = [
   'To Research',
@@ -24,7 +25,8 @@ export const PILELINE_STATUSES: SponsorStatus[] = [
   'Contacted',
   'In Conversation',
   'Committed',
-  'Declined / No Response',
+  'Registered / Enrolled',
+  'Declined',
 ];
 
 export interface Sponsor {
@@ -44,6 +46,7 @@ export interface Sponsor {
   priority: 'High' | 'Medium' | 'Low';
   lastContactedAt?: string;
   nextFollowupDate?: string;
+  archived?: boolean;
   createdAt: string;
 }
 
@@ -63,6 +66,7 @@ export interface EmailTemplate {
   id: string;
   title: string;
   category: string;
+  subject: string;
   body: string;
   active: boolean;
 }
@@ -83,6 +87,16 @@ export interface KnowledgeBaseFile {
   uploadedAt: string;
   size?: number; // Size in bytes
   type?: string;
+}
+
+export interface SupportRequest {
+  id: string;
+  student_id: string;
+  rep_name: string;
+  country: string;
+  subject: string;
+  message: string;
+  created_at: string;
 }
 
 export type ViewType = 'pipeline' | 'knowledgeBase';

@@ -21,8 +21,8 @@ export const AddLeadModal: React.FC<AddLeadModalProps> = ({ onClose }) => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!organization || !website || !contactName || !email || !classification) {
-      alert("Organization, Website, Contact Name, Email, and Classification are required.");
+    if (!organization || !contactName || !email || !classification) {
+      alert("Organization, Contact Name, Email, and Classification are required.");
       return;
     }
     
@@ -76,12 +76,11 @@ export const AddLeadModal: React.FC<AddLeadModalProps> = ({ onClose }) => {
             </div>
             
             <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-1">Website <span className="text-red-500">*</span></label>
+              <label className="block text-sm font-semibold text-slate-700 mb-1">Website</label>
               <input 
                 type="url" 
                 value={website}
                 onChange={(e) => setWebsite(e.target.value)}
-                required
                 className="w-full border border-slate-200 rounded-lg p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-orange/50 focus:border-brand-orange"
                 placeholder="https://"
               />
@@ -124,7 +123,9 @@ export const AddLeadModal: React.FC<AddLeadModalProps> = ({ onClose }) => {
                 <option value="" disabled>Select a classification</option>
                 <option value="Registry">Registry</option>
                 <option value="CFT Training">CFT Training</option>
-                <option value="Sponsorships">Sponsorships</option>
+                <option value="Sponsorships" disabled={role !== 'coordinator'}>
+                  Sponsorships {role !== 'coordinator' && '(admin only)'}
+                </option>
               </select>
             </div>
             

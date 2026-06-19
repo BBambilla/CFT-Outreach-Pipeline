@@ -3,19 +3,28 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { AppProvider, useAppContext } from './context/AppContext';
 import { Navigation } from './components/Navigation';
 import { StudentHome } from './components/StudentHome';
 import { CoordinatorDashboard } from './components/CoordinatorDashboard';
 import { KnowledgeBase } from './components/KnowledgeBase';
 import { Login } from './components/Login';
+import { initSupabase } from './lib/supabase';
 
 const AppContent: React.FC = () => {
-  const { role, currentView, isAuthenticated } = useAppContext();
+  const { role, currentView, isAuthenticated, isLoading, currentUser, students } = useAppContext();
   
+  if (isLoading) {
+    return <div className="min-h-screen flex items-center justify-center bg-slate-50 text-slate-500 font-medium text-lg">Loading...</div>;
+  }
+
   if (!isAuthenticated) {
     return <Login />;
+  }
+
+  if (role === 'student' && (!currentUser || students.length === 0)) {
+    return <div className="min-h-screen flex items-center justify-center bg-slate-50 text-slate-500 font-medium text-lg">Loading profile...</div>;
   }
 
   return (
@@ -33,6 +42,22 @@ const AppContent: React.FC = () => {
 };
 
 export default function App() {
+  const [dbStatus, setDbStatus] = useState<'checking' | 'configured' | 'unconfigured'>('checking');
+  
+  useEffect(() => {
+    initSupabase().then(success => {
+      setDbStatus(success ? 'configured' : 'unconfigured');
+    });
+  }, []);
+
+  if (dbStatus === 'checking') {
+    return <div className="min-h-screen flex items-center justify-center bg-slate-50 text-slate-500 font-medium">Checking database configuration...</div>;
+  }
+
+  if (dbStatus === 'unconfigured') {
+    return <div className="min-h-screen flex font-medium items-center justify-center bg-red-50 text-red-600 text-lg">Database not configured (SUPABASE_URL and SUPABASE_ANON_KEY missing on server).</div>;
+  }
+
   return (
     <AppProvider>
       <AppContent />

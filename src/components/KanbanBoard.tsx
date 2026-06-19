@@ -2,7 +2,7 @@ import React from 'react';
 import { Sponsor, SponsorStatus, PILELINE_STATUSES } from '../types';
 import { useAppContext } from '../context/AppContext';
 
-export const KanbanBoard: React.FC<{ sponsors: Sponsor[], onSponsorClick: (id: string) => void }> = ({ sponsors, onSponsorClick }) => {
+export const KanbanBoard: React.FC<{ sponsors: Sponsor[], archivedSponsors?: Sponsor[], onSponsorClick: (id: string) => void }> = ({ sponsors, archivedSponsors, onSponsorClick }) => {
   const { updateSponsor, currentUser, students, role } = useAppContext();
 
   const handleDragStart = (e: React.DragEvent, id: string) => {
@@ -28,7 +28,8 @@ export const KanbanBoard: React.FC<{ sponsors: Sponsor[], onSponsorClick: (id: s
     'Contacted': 'border-t-brand-yellow',
     'In Conversation': 'border-t-brand-orange shadow-brand-orange/20 shadow-md',
     'Committed': 'border-t-sdg-green',
-    'Declined / No Response': 'grayscale border-t-slate-200'
+    'Registered / Enrolled': 'border-t-teal-500',
+    'Declined': 'grayscale border-t-slate-200'
   };
 
   const columnTheme: Record<SponsorStatus, { colBg: string, headerText: string, badge: string }> = {
@@ -57,7 +58,12 @@ export const KanbanBoard: React.FC<{ sponsors: Sponsor[], onSponsorClick: (id: s
       headerText: 'text-emerald-800', 
       badge: 'bg-emerald-200 text-emerald-900' 
     },
-    'Declined / No Response': { 
+    'Registered / Enrolled': { 
+      colBg: 'bg-teal-50 border-teal-200', 
+      headerText: 'text-teal-800', 
+      badge: 'bg-teal-200 text-teal-900' 
+    },
+    'Declined': { 
       colBg: 'bg-gray-100 border-gray-200', 
       headerText: 'text-gray-500', 
       badge: 'bg-gray-200 text-gray-600' 
@@ -67,8 +73,10 @@ export const KanbanBoard: React.FC<{ sponsors: Sponsor[], onSponsorClick: (id: s
   return (
     <div className="flex flex-1 space-x-6 overflow-x-auto pb-4 scrollbar-hide min-h-[400px]">
       {PILELINE_STATUSES.map(status => {
+        if (status === 'Committed' && role !== 'coordinator') return null;
+        
         const columnSponsors = sponsors.filter(s => s.status === status);
-        const isDeclined = status === 'Declined / No Response';
+        const isDeclined = status === 'Declined';
         const theme = columnTheme[status];
         
         return (
@@ -124,6 +132,51 @@ export const KanbanBoard: React.FC<{ sponsors: Sponsor[], onSponsorClick: (id: s
           </div>
         );
       })}
+      
+      {archivedSponsors && (
+        <div 
+          className="min-w-[280px] w-[320px] flex flex-col p-3 rounded-xl border bg-slate-50 border-slate-200 opacity-60"
+        >
+          <div className="flex items-center justify-between mb-4 px-1">
+            <span className="text-[13px] font-bold uppercase tracking-wider text-slate-500">Sponsorship leads (submitted, inactive)</span>
+            <span className="bg-slate-200 text-slate-700 text-[11px] px-2 py-0.5 rounded-full font-bold shadow-sm">
+              {archivedSponsors.length}
+            </span>
+          </div>
+          
+          <div className="space-y-3 flex-1 overflow-y-auto pr-1">
+            {archivedSponsors.map(sponsor => {
+              const owner = students.find(s => s.id === sponsor.assignedStudentId);
+              return (
+                <div
+                  key={sponsor.id}
+                  draggable={false}
+                  onClick={() => onSponsorClick(sponsor.id)}
+                  className="p-3.5 rounded-xl block border shadow-sm border-t-4 border-t-slate-300 cursor-pointer transition-all bg-slate-100 hover:border-slate-400"
+                >
+                  <h3 className="font-bold text-sm mb-1.5 text-slate-800 leading-tight">{sponsor.organization}</h3>
+                  <p className="text-xs text-slate-500 mb-3 truncate">{sponsor.contactName || 'No contact specified'}</p>
+                  <div className="flex items-center justify-between mt-auto">
+                      {sponsor.priority === 'High' ? (
+                        <span className="text-[10px] font-bold px-2 py-1 bg-slate-200 text-slate-600 rounded-md uppercase tracking-wide">Code Red</span>
+                      ) : <span />}
+                      {owner ? (
+                        <span className="text-[10px] font-medium text-slate-500 bg-slate-200 px-2 py-1 rounded-md truncate max-w-[120px] border border-slate-300">
+                          {owner.name}
+                        </span>
+                      ) : <span />}
+                  </div>
+                </div>
+              );
+            })}
+            {archivedSponsors.length === 0 && (
+              <div className="text-sm text-center font-medium my-2 py-8 border-2 border-dashed rounded-xl opacity-60 text-slate-500 border-slate-300">
+                No archived leads
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

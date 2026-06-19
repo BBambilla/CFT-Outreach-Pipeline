@@ -1,31 +1,64 @@
 import React, { useState } from 'react';
-import { X } from 'lucide-react';
+import { X, Loader2 } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
+import { supabase } from '../lib/supabase';
 
 interface RequestSupportModalProps {
   onClose: () => void;
 }
 
 export const RequestSupportModal: React.FC<RequestSupportModalProps> = ({ onClose }) => {
-  const { currentUser } = useAppContext();
+  const { currentUser, role } = useAppContext();
   const [subject, setSubject] = useState('');
   const [message, setMessage] = useState('');
+  const [isSending, setIsSending] = useState(false);
   const [isSent, setIsSent] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSend = () => {
-    // Generate mailto link
-    const to = "pratishtha@thesunprogram.com,bonnabambilla@gmail.com";
-    const subjectLine = encodeURIComponent(`Support request: ${subject}`);
-    const body = encodeURIComponent(`Name: ${currentUser?.name || 'Unknown'}\nCountry: ${currentUser?.country || 'Unknown'}\n\n${message}`);
-    
-    // Open email client
-    window.location.href = `mailto:${to}?subject=${subjectLine}&body=${body}`;
-    
-    // Show confirmation temporarily, then close
-    setIsSent(true);
-    setTimeout(() => {
-      onClose();
-    }, 4500);
+  const handleSend = async () => {
+    setIsSending(true);
+    setError(null);
+    try {
+      const fromEmail = role === 'coordinator' ? 'olly@thesunprogram.com' : currentUser?.email;
+      const repName = currentUser?.name || 'Unknown';
+      const countryStr = currentUser?.country || 'Unknown';
+      const toAddresses = ["pratishtha@thesunprogram.com", "hans@thesunprogram.com"];
+      const subjectLine = `Support request from ${countryStr}`;
+      const bodyStr = `Name: ${repName}\nCountry: ${countryStr}\nSubject: ${subject}\n\n${message}`;
+
+      const res = await fetch('/api/send-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          from: fromEmail,
+          to: toAddresses.join(','),
+          subject: subjectLine,
+          body: bodyStr,
+        })
+      });
+
+      if (!res.ok) {
+        throw new Error('Failed to send email');
+      }
+
+      await supabase.from('support_requests').insert({
+        student_id: currentUser?.id,
+        rep_name: repName,
+        country: countryStr,
+        subject,
+        message
+      });
+
+      setIsSent(true);
+      setTimeout(() => {
+        onClose();
+      }, 3000);
+    } catch (err: any) {
+      console.error(err);
+      setError('Failed to send support request. Please try again.');
+    } finally {
+      setIsSending(false);
+    }
   };
 
   if (isSent) {
@@ -35,9 +68,9 @@ export const RequestSupportModal: React.FC<RequestSupportModalProps> = ({ onClos
           <div className="w-12 h-12 bg-green-100 text-sdg-green rounded-full flex items-center justify-center mb-4">
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
           </div>
-          <h3 className="text-lg font-bold text-slate-800 mb-2">Almost there!</h3>
+          <h3 className="text-lg font-bold text-slate-800 mb-2">Support request sent</h3>
           <p className="text-slate-600 text-sm">
-            Your email draft is ready — please press send in your email app.
+            The coordinator team will get back to you shortly.
           </p>
         </div>
       </div>
@@ -60,6 +93,11 @@ export const RequestSupportModal: React.FC<RequestSupportModalProps> = ({ onClos
         </div>
 
         <div className="p-4 flex-1 overflow-y-auto">
+          {error && (
+            <div className="mb-4 bg-red-50 border border-red-100 text-red-600 p-3 rounded-lg text-sm">
+              {error}
+            </div>
+          )}
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">Subject</label>
@@ -93,10 +131,10 @@ export const RequestSupportModal: React.FC<RequestSupportModalProps> = ({ onClos
           </button>
           <button
             onClick={handleSend}
-            disabled={!subject.trim() || !message.trim()}
-            className="px-4 py-2 text-sm font-semibold text-white bg-brand-orange hover:bg-orange-700 disabled:opacity-50 rounded-lg transition-colors shadow-sm"
+            disabled={!subject.trim() || !message.trim() || isSending}
+            className="px-4 py-2 text-sm font-semibold text-white bg-brand-orange hover:bg-orange-700 flex items-center justify-center disabled:opacity-50 rounded-lg transition-colors shadow-sm"
           >
-            Send
+            {isSending ? <Loader2 size={16} className="animate-spin" /> : 'Send'}
           </button>
         </div>
       </div>

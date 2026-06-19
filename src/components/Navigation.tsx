@@ -5,12 +5,11 @@ import { Logo } from './Logo';
 import { RequestSupportModal } from './RequestSupportModal';
 
 export const Navigation: React.FC = () => {
-  const { role, setRole, currentUser, students, setCurrentUser, currentView, setCurrentView, setIsAuthenticated } = useAppContext();
+  const { role, setRole, currentUser, students, setCurrentUser, currentView, setCurrentView, setIsAuthenticated, signOut } = useAppContext();
   const [isSupportModalOpen, setIsSupportModalOpen] = useState(false);
 
-  const handleLogout = () => {
-    setIsAuthenticated(false);
-    // Optional: setCurrentUser can remain or be reset if you choose.
+  const handleLogout = async () => {
+    await signOut();
   };
 
   return (

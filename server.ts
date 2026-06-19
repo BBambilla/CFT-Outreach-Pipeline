@@ -2,7 +2,7 @@ import express from 'express';
 import path from 'path';
 import cors from 'cors';
 import { createServer as createViteServer } from 'vite';
-import { GoogleGenAI } from '@google/genai';
+import { Resend } from 'resend';
 
 async function startServer() {
   const app = express();
@@ -11,105 +11,72 @@ async function startServer() {
   app.use(cors());
   app.use(express.json());
 
-  // API Routes
-  app.post('/api/ai/personalize', async (req, res) => {
+  app.post('/api/send-email', async (req, res) => {
     try {
-      const { template, rationale, organization, recentActivity } = req.body;
+      const { from, fromName, to, subject, body, attachments } = req.body;
+      const resend = new Resend(process.env.RESEND_API_KEY);
       
-      if (!process.env.GEMINI_API_KEY) {
-        return res.status(500).json({ error: 'GEMINI_API_KEY is missing' });
+      const toArray = Array.isArray(to) ? to : to.split(',').map((e: string) => e.trim());
+
+      const fromString = fromName ? `${fromName} <${from}>` : from;
+
+      let resendAttachments: any[] = [];
+      let attachmentNotes: string[] = [];
+
+      if (attachments && Array.isArray(attachments)) {
+        for (const att of attachments) {
+          try {
+            const resp = await fetch(att.url);
+            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+            
+            const buffer = await resp.arrayBuffer();
+            const base64Content = Buffer.from(buffer).toString('base64');
+            
+            resendAttachments.push({
+              filename: att.filename,
+              content: base64Content,
+            });
+          } catch (e: any) {
+            console.error(`Failed to fetch attachment ${att.filename}`, e);
+            attachmentNotes.push(`Could not attach ${att.filename}`);
+          }
+        }
       }
 
-      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-      const prompt = `You are a sponsorship outreach assistant for a student. 
-Rewrite the following outreach email template to make it highly personalized for the organization "${organization}".
-Use this rationale why they are a good fit: "${rationale}".
-${recentActivity ? `Recent activity log: "${recentActivity}"` : ''}
+      const emailOptions: any = {
+        from: fromString,
+        replyTo: from,
+        to: toArray,
+        subject: subject,
+        text: body,
+      };
 
-Original Template:
-${template}
+      if (resendAttachments.length > 0) {
+        emailOptions.attachments = resendAttachments;
+      }
 
-Return ONLY the personalized email body, nothing else.`;
+      const { data, error } = await resend.emails.send(emailOptions);
 
-      const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: prompt,
+      if (error) {
+        return res.status(400).json({ error });
+      }
+
+      res.status(200).json({ 
+        success: true, 
+        data, 
+        notes: attachmentNotes.length > 0 ? attachmentNotes : undefined 
       });
-
-      res.json({ result: response.text });
-    } catch (error: any) {
-      console.error('Error in /api/ai/personalize:', error);
-      res.status(500).json({ error: error.message || 'Failed to personalize' });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: 'Internal server error' });
     }
   });
 
-  app.post('/api/ai/summarize', async (req, res) => {
-    try {
-      const { emailText } = req.body;
-      if (!process.env.GEMINI_API_KEY) {
-        return res.status(500).json({ error: 'GEMINI_API_KEY is missing' });
-      }
-
-      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-      const prompt = `Read the following email reply from a potential sponsor.
-1. Provide a concise 2-line summary.
-2. Suggest the next status (must be one of: To Research, Ready to Contact, Contacted, In Conversation, Committed, Declined / No Response).
-3. Suggest the next action.
-
-Email Reply:
-${emailText}
-
-Format your response as a JSON object:
-{ "summary": "...", "suggestedStatus": "...", "suggestedAction": "..." }`;
-
-      const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: prompt,
-      });
-
-      let responseText = response.text || "{}";
-      const match = responseText.match(/```json\n([\s\S]*?)\n```/);
-      if (match) {
-        responseText = match[1];
-      }
-
-      res.json(JSON.parse(responseText));
-    } catch (error: any) {
-      console.error('Error in /api/ai/summarize:', error);
-      res.status(500).json({ error: error.message || 'Failed to summarize' });
-    }
-  });
-
-  app.post('/api/ai/research', async (req, res) => {
-    try {
-      const { organization } = req.body;
-      if (!process.env.GEMINI_API_KEY) {
-        return res.status(500).json({ error: 'GEMINI_API_KEY is missing' });
-      }
-
-      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-      const prompt = `Help a student find contact information for a potential corporate sponsor named "${organization}".
-Return a short checklist (3-4 items) of research steps, such as checking their website /about page, a specific LinkedIn search query, and corporate social responsibility (CSR) page patterns.
-
-Format your response as a JSON array of strings:
-["Step 1...", "Step 2..."]`;
-
-      const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: prompt,
-      });
-      
-      let responseText = response.text || "[]";
-      const match = responseText.match(/```json\n([\s\S]*?)\n```/);
-      if (match) {
-        responseText = match[1];
-      }
-
-      res.json(JSON.parse(responseText));
-    } catch (error: any) {
-      console.error('Error in /api/ai/research:', error);
-      res.status(500).json({ error: error.message || 'Failed to research' });
-    }
+  app.get('/api/config', (req, res) => {
+    res.json({
+      supabaseUrl: process.env.SUPABASE_URL,
+      supabaseAnonKey: process.env.SUPABASE_ANON_KEY,
+    });
   });
 
   // Vite integration
