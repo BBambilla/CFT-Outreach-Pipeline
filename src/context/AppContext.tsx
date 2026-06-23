@@ -95,6 +95,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           lastContactedAt: s.last_contacted_at,
           nextFollowupDate: s.next_followup_date,
           archived: s.archived,
+          archivedFromStatus: s.archived_from_status,
           createdAt: s.created_at
         })));
       }
@@ -294,6 +295,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     if (data.researchNotes !== undefined) mapped.research_notes = data.researchNotes;
     if (data.lastContactedAt !== undefined) mapped.last_contacted_at = data.lastContactedAt;
     if (data.nextFollowupDate !== undefined) mapped.next_followup_date = data.nextFollowupDate;
+    if (data.archivedFromStatus !== undefined) mapped.archived_from_status = data.archivedFromStatus;
     
     const cleanMapped = { ...mapped };
     delete cleanMapped.assignedStudentId;
@@ -302,6 +304,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     delete cleanMapped.researchNotes;
     delete cleanMapped.lastContactedAt;
     delete cleanMapped.nextFollowupDate;
+    delete cleanMapped.archivedFromStatus;
     delete cleanMapped.createdAt;
     
     const { error } = await supabase.from('sponsors').update(cleanMapped).eq('id', id);

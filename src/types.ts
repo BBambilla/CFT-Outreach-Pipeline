@@ -49,6 +49,7 @@ export interface Sponsor {
   lastContactedAt?: string;
   nextFollowupDate?: string;
   archived?: boolean;
+  archivedFromStatus?: string;
   createdAt: string;
 }
 

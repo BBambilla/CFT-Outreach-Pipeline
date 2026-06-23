@@ -146,7 +146,7 @@ export const KanbanBoard: React.FC<{ sponsors: Sponsor[], archivedSponsors?: Spo
           className="min-w-[280px] w-[320px] flex flex-col p-3 rounded-xl border bg-slate-50 border-slate-200 opacity-60"
         >
           <div className="flex items-center justify-between mb-4 px-1">
-            <span className="text-[13px] font-bold uppercase tracking-wider text-slate-500">Sponsorship leads (submitted, inactive)</span>
+            <span className="text-[13px] font-bold uppercase tracking-wider text-slate-500">Sponsorship</span>
             <span className="bg-slate-200 text-slate-700 text-[11px] px-2 py-0.5 rounded-full font-bold shadow-sm">
               {archivedSponsors.length}
             </span>

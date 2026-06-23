@@ -1,15 +1,17 @@
 import React, { useState } from 'react';
 import { useAppContext } from '../context/AppContext';
-import { Layers, Presentation, Compass, Users, LogOut, LifeBuoy, Bell } from 'lucide-react';
+import { Layers, Presentation, Compass, Users, LogOut, LifeBuoy, Bell, CheckCircle2 } from 'lucide-react';
 import { Logo } from './Logo';
 import { RequestSupportModal } from './RequestSupportModal';
 import { SponsorDetailModal } from './SponsorDetailModal';
+import { supabase } from '../lib/supabase';
 
 export const Navigation: React.FC = () => {
   const { role, setRole, currentUser, students, sponsors, setCurrentUser, currentView, setCurrentView, setIsAuthenticated, signOut } = useAppContext();
   const [isSupportModalOpen, setIsSupportModalOpen] = useState(false);
   const [isInboxOpen, setIsInboxOpen] = useState(false);
   const [selectedSponsorId, setSelectedSponsorId] = useState<string | null>(null);
+  const [clearingIds, setClearingIds] = useState<Set<string>>(new Set());
 
   const handleLogout = async () => {
     await signOut();
@@ -108,6 +110,27 @@ export const Navigation: React.FC = () => {
                                    <div className="w-1.5 h-1.5 rounded-full bg-blue-500 mr-1 animate-pulse"></div>
                                    Response
                                  </span>
+                                 <button
+                                  onClick={async (e) => {
+                                    e.stopPropagation();
+                                    setClearingIds(prev => new Set(prev).add(sponsor.id));
+                                    try {
+                                      await supabase.rpc('clear_new_reply', { p_sponsor_id: sponsor.id });
+                                    } finally {
+                                      setClearingIds(prev => {
+                                        const next = new Set(prev);
+                                        next.delete(sponsor.id);
+                                        return next;
+                                      });
+                                    }
+                                  }}
+                                  disabled={clearingIds.has(sponsor.id)}
+                                  className="text-[10px] uppercase font-bold text-slate-500 hover:text-slate-800 bg-slate-100 px-2 py-1 flex items-center gap-1 rounded border border-slate-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                  title="Mark as read"
+                                >
+                                  <CheckCircle2 size={12} />
+                                  Mark Read
+                                </button>
                                  <span className="text-[10px] font-bold px-2 py-1 bg-slate-100 text-slate-600 rounded-md uppercase tracking-wide border border-slate-200">{sponsor.status}</span>
                                </div>
                                {owner ? (

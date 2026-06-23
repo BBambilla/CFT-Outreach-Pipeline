@@ -11,6 +11,7 @@ export const SponsorDetailModal: React.FC<{ sponsorId: string, onClose: () => vo
   
   const [activeTab, setActiveTab] = useState<'Overview' | 'Outreach' | 'Activity log' | 'Files' | 'Conversation'>('Overview');
   const [inboundMessages, setInboundMessages] = useState<InboundMessage[]>([]);
+  const [isClearing, setIsClearing] = useState(false);
   
   useEffect(() => {
     if (activeTab === 'Conversation') {
@@ -49,7 +50,7 @@ export const SponsorDetailModal: React.FC<{ sponsorId: string, onClose: () => vo
 
   if (!sponsor) return null;
 
-  const isOwner = sponsor.assignedStudentId === currentUser?.id || role === 'coordinator';
+  const isOwner = role === 'coordinator' ? true : (sponsor.assignedStudentId === currentUser?.id && !sponsor.archived);
   const owner = students.find(s => s.id === sponsor.assignedStudentId);
 
   const relevantResources = resources.filter(r => r.tags.includes(sponsor.status));
@@ -119,10 +120,28 @@ export const SponsorDetailModal: React.FC<{ sponsorId: string, onClose: () => vo
                 {sponsor.status}
               </span>
               {sponsor.has_new_reply && (
-                <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-700 border border-blue-200 flex items-center shadow-sm">
-                  <div className="w-1.5 h-1.5 rounded-full bg-blue-500 mr-1.5 animate-pulse"></div>
-                  New Response
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-700 border border-blue-200 flex items-center shadow-sm">
+                    <div className="w-1.5 h-1.5 rounded-full bg-blue-500 mr-1.5 animate-pulse"></div>
+                    New Response
+                  </span>
+                  <button
+                    onClick={async () => {
+                      setIsClearing(true);
+                      try {
+                        await supabase.rpc('clear_new_reply', { p_sponsor_id: sponsorId });
+                      } finally {
+                        setIsClearing(false);
+                      }
+                    }}
+                    disabled={isClearing}
+                    className="text-[10px] uppercase font-bold text-slate-500 hover:text-slate-800 bg-slate-100 px-2 py-1 flex items-center gap-1 rounded border border-slate-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    title="Mark as read"
+                  >
+                    <CheckCircle2 size={12} />
+                    Mark Read
+                  </button>
+                </div>
               )}
               {!isOwner && owner && (
                  <span className="text-xs text-slate-500 font-medium">Owned by: {owner.name}</span>
@@ -131,18 +150,47 @@ export const SponsorDetailModal: React.FC<{ sponsorId: string, onClose: () => vo
             <p className="text-sm text-gray-500 mt-1">{sponsor.contactName} • {sponsor.role}</p>
           </div>
           <div className="flex items-center gap-2">
-            <button 
-              onClick={() => {
-                if (window.confirm('Are you sure you want to delete this lead?')) {
-                  deleteSponsor(sponsorId);
-                  onClose();
-                }
-              }}
-              className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors flex items-center justify-center"
-              title="Delete Lead"
-            >
-              <Trash2 className="w-5 h-5" />
-            </button>
+            {role === 'coordinator' && (
+              sponsor.archived ? (
+                <button
+                  onClick={() => {
+                    updateSponsor(sponsor.id, { 
+                      archived: false, 
+                      status: (sponsor.archivedFromStatus as SponsorStatus) || sponsor.status 
+                    });
+                  }}
+                  className="px-3 py-1.5 text-sm font-semibold text-brand-blue bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
+                >
+                  Restore to pipeline
+                </button>
+              ) : (
+                <button
+                  onClick={() => {
+                    updateSponsor(sponsor.id, { 
+                      archived: true, 
+                      archivedFromStatus: sponsor.status 
+                    });
+                  }}
+                  className="px-3 py-1.5 text-sm font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors"
+                >
+                  Move to Sponsorship
+                </button>
+              )
+            )}
+            {isOwner && (
+              <button 
+                onClick={() => {
+                  if (window.confirm('Are you sure you want to delete this lead?')) {
+                    deleteSponsor(sponsorId);
+                    onClose();
+                  }
+                }}
+                className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors flex items-center justify-center"
+                title="Delete Lead"
+              >
+                <Trash2 className="w-5 h-5" />
+              </button>
+            )}
             <button onClick={onClose} className="p-2 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100 transition-colors">
               <X className="w-5 h-5" />
             </button>
