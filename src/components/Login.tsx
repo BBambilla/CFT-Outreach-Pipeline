@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Compass, Users, MapPin } from 'lucide-react';
+import { Compass, Users, MapPin, Eye, EyeOff } from 'lucide-react';
 import { Logo } from './Logo';
 import { supabase } from '../lib/supabase';
 
@@ -11,6 +11,7 @@ export const Login: React.FC = () => {
   const [error, setError] = useState('');
   const [directory, setDirectory] = useState<{id: string, name: string, country: string}[]>([]);
   const [isSigningIn, setIsSigningIn] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     const fetchDirectory = async () => {
@@ -136,13 +137,22 @@ export const Login: React.FC = () => {
               
               <div>
                  <label className="block text-sm font-medium text-slate-700 mb-1">Password</label>
-                 <input
-                   type="password"
-                   value={password}
-                   onChange={(e) => setPassword(e.target.value)}
-                   placeholder="Enter country password"
-                   className="block w-full px-3 py-2.5 sm:text-sm border border-slate-300 rounded-lg focus:ring-brand-orange focus:border-brand-orange"
-                 />
+                 <div className="relative">
+                   <input
+                     type={showPassword ? "text" : "password"}
+                     value={password}
+                     onChange={(e) => setPassword(e.target.value)}
+                     placeholder="Enter country password"
+                     className="block w-full px-3 py-2.5 sm:text-sm border border-slate-300 rounded-lg focus:ring-brand-orange focus:border-brand-orange pr-10"
+                   />
+                   <button
+                     type="button"
+                     onClick={() => setShowPassword(!showPassword)}
+                     className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 focus:outline-none"
+                   >
+                     {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                   </button>
+                 </div>
               </div> 
               
               {error && <p className="text-sm text-red-500">{error}</p>}
@@ -168,13 +178,22 @@ export const Login: React.FC = () => {
                   <option value="olly">Admin (Olly Wheatcroft)</option>
                 </select>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Passcode / Password</label>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder={coordinatorAccount === 'olly' ? "Enter password" : "Enter passcode"}
-                  className="block w-full px-3 py-2.5 sm:text-sm border border-slate-300 rounded-lg focus:ring-brand-orange focus:border-brand-orange"
-                />
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder={coordinatorAccount === 'olly' ? "Enter password" : "Enter passcode"}
+                    className="block w-full px-3 py-2.5 sm:text-sm border border-slate-300 rounded-lg focus:ring-brand-orange focus:border-brand-orange pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 focus:outline-none"
+                  >
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
               </div>
               
               {error && <p className="text-sm text-red-500">{error}</p>}
