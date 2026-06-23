@@ -10,23 +10,39 @@ export default async function handler(req: any, res: any) {
   try {
     const payload =
       typeof req.body === 'string' ? JSON.parse(req.body || '{}') : (req.body || {});
-    const { from, to, subject, attachments } = payload;
+    const { from, fromName, subject, attachments } = payload;
     const text = payload.body ?? payload.text;
 
-    if (!from || !subject || !text || !to || (Array.isArray(to) && to.length === 0)) {
+    // Accept "to" as an array OR a comma/semicolon-separated string.
+    const toList = Array.isArray(payload.to)
+      ? payload.to
+      : String(payload.to || '')
+          .split(/[,;]+/)
+          .map((s: string) => s.trim())
+          .filter(Boolean);
+
+    if (!from || !subject || !text || toList.length === 0) {
       return res.status(400).json({ ok: false, error: 'Missing required field' });
     }
 
     const resend = new Resend(process.env.RESEND_API_KEY);
+
     const emailOptions: any = {
-      from,
-      to: Array.isArray(to) ? to : [to],
+      from: fromName ? `${fromName} <${from}>` : from,
+      to: toList,
       subject,
       text,
       replyTo: from,
     };
+
+    // Resend wants { filename, content } (base64) OR { filename, path } (URL/file).
+    // The app may send { filename, url } — map it to path.
     if (Array.isArray(attachments) && attachments.length > 0) {
-      emailOptions.attachments = attachments;
+      emailOptions.attachments = attachments.map((a: any) =>
+        a && a.content
+          ? { filename: a.filename, content: a.content }
+          : { filename: a.filename, path: a.path || a.url }
+      );
     }
 
     const { data, error } = await resend.emails.send(emailOptions);
