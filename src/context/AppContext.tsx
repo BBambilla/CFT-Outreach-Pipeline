@@ -90,6 +90,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           researchNotes: s.research_notes,
           status: s.status,
           priority: s.priority,
+          has_new_reply: s.has_new_reply,
+          last_reply_at: s.last_reply_at,
           lastContactedAt: s.last_contacted_at,
           nextFollowupDate: s.next_followup_date,
           archived: s.archived,
@@ -264,6 +266,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         triggerLoad();
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'knowledge_base_files' }, payload => {
+        triggerLoad();
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'inbound_messages' }, payload => {
         triggerLoad();
       })
       .subscribe();

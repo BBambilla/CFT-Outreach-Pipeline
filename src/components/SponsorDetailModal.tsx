@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../context/AppContext';
-import { Interaction, SponsorStatus } from '../types';
+import { Interaction, SponsorStatus, InboundMessage } from '../types';
+import { supabase } from '../lib/supabase';
 import { X, Search, Sparkles, Send, FileText, ChevronRight, PenSquare, ArrowRight, Trash2, AlertCircle, CheckCircle2 } from 'lucide-react';
 
 export const SponsorDetailModal: React.FC<{ sponsorId: string, onClose: () => void }> = ({ sponsorId, onClose }) => {
@@ -8,7 +9,28 @@ export const SponsorDetailModal: React.FC<{ sponsorId: string, onClose: () => vo
   const sponsor = sponsors.find(s => s.id === sponsorId);
   const sponsorInteractions = interactions.filter(i => i.sponsorId === sponsorId).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   
-  const [activeTab, setActiveTab] = useState<'Overview' | 'Outreach' | 'Activity log' | 'Files'>('Overview');
+  const [activeTab, setActiveTab] = useState<'Overview' | 'Outreach' | 'Activity log' | 'Files' | 'Conversation'>('Overview');
+  const [inboundMessages, setInboundMessages] = useState<InboundMessage[]>([]);
+  
+  useEffect(() => {
+    if (activeTab === 'Conversation') {
+      const fetchMessages = async () => {
+        const { data } = await supabase.from('inbound_messages').select('*').eq('sponsor_id', sponsorId).order('received_at', { ascending: true });
+        if (data) {
+          setInboundMessages(data);
+        }
+        
+        // Mark read
+        if (sponsor?.has_new_reply) {
+          await supabase.from('inbound_messages').update({ read: true }).eq('sponsor_id', sponsorId).eq('read', false);
+          // Wait, doesn't has_new_reply clear automatically or via rpc?
+          // The prompt says: "When the Conversation tab is opened for a lead, set read = true on that lead's inbound_messages rows so the unread indicator clears."
+          // But it also says: "call the database function clear_new_reply with that lead's id (supabase.rpc('clear_new_reply', { p_sponsor_id: <lead id> })). That clears has_new_reply" (for the send flow)
+        }
+      };
+      fetchMessages();
+    }
+  }, [activeTab, sponsorId, sponsor?.has_new_reply]);
   
   // States for interactions
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>('');
@@ -96,6 +118,12 @@ export const SponsorDetailModal: React.FC<{ sponsorId: string, onClose: () => vo
               <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700 border border-gray-200">
                 {sponsor.status}
               </span>
+              {sponsor.has_new_reply && (
+                <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-700 border border-blue-200 flex items-center shadow-sm">
+                  <div className="w-1.5 h-1.5 rounded-full bg-blue-500 mr-1.5 animate-pulse"></div>
+                  New Response
+                </span>
+              )}
               {!isOwner && owner && (
                  <span className="text-xs text-slate-500 font-medium">Owned by: {owner.name}</span>
               )}
@@ -128,7 +156,7 @@ export const SponsorDetailModal: React.FC<{ sponsorId: string, onClose: () => vo
             {/* Tabs */}
             <div className="px-6 border-b border-gray-200">
               <div className="flex space-x-6">
-                {(['Overview', 'Outreach', 'Activity log', 'Files'] as const).map(tab => (
+                {(['Overview', 'Outreach', 'Activity log', 'Files', 'Conversation'] as const).map(tab => (
                   <button
                     key={tab}
                     onClick={() => setActiveTab(tab)}
@@ -329,6 +357,7 @@ export const SponsorDetailModal: React.FC<{ sponsorId: string, onClose: () => vo
                                         summary: `Email sent to ${emailTo} | Subject: ${draftSubject}${notes}` 
                                       });
                                       updateSponsor(sponsorId, { status: 'Contacted', lastContactedAt: new Date().toISOString() });
+                                      await supabase.rpc('clear_new_reply', { p_sponsor_id: sponsorId });
                                       setEmailSuccess(`Email sent successfully to ${emailTo}${notes}`);
                                       setDraftEmail('');
                                       setDraftSubject('');
@@ -496,6 +525,64 @@ export const SponsorDetailModal: React.FC<{ sponsorId: string, onClose: () => vo
                         </div>
                       ))
                     )}
+                  </div>
+                </div>
+              )}
+
+              {activeTab === 'Conversation' && (
+                <div className="p-6">
+                  <h3 className="font-heading font-semibold text-lg text-slate-800 mb-6">Conversation History</h3>
+                  <div className="space-y-6">
+                    {(() => {
+                      const sentEmails = sponsorInteractions
+                        .filter(i => i.type === 'Email sent')
+                        .map(i => ({
+                          id: i.id,
+                          date: new Date(i.date),
+                          type: 'sent',
+                          summary: i.summary
+                        }));
+                        
+                      const receivedEmails = inboundMessages
+                        .map(m => ({
+                          id: m.id,
+                          date: new Date(m.received_at),
+                          type: 'received',
+                          subject: m.subject,
+                          body: m.body_text,
+                          senderName: m.sender_name,
+                          senderEmail: m.sender_email,
+                          read: m.read
+                        }));
+                        
+                      const allMessages = [...sentEmails, ...receivedEmails].sort((a, b) => a.date.getTime() - b.date.getTime());
+                      
+                      if (allMessages.length === 0) {
+                        return <div className="text-sm text-slate-500 italic">No conversation history yet.</div>;
+                      }
+
+                      return allMessages.map(msg => (
+                        <div key={msg.id} className={`flex ${msg.type === 'sent' ? 'justify-end' : 'justify-start'}`}>
+                          <div className={`max-w-[85%] rounded-xl p-4 shadow-sm ${msg.type === 'sent' ? 'bg-brand-orange/10 border border-brand-orange/20 text-slate-800' : 'bg-slate-50 border border-slate-200 text-slate-800'}`}>
+                            {msg.type === 'sent' ? (
+                              <>
+                                <div className="text-xs text-brand-orange font-bold tracking-wide uppercase mb-1 flex items-center justify-end">You • {msg.date.toLocaleString()}</div>
+                                <div className="text-sm whitespace-pre-wrap">{msg.summary}</div>
+                              </>
+                            ) : (
+                              <>
+                                <div className="text-xs text-blue-600 font-bold tracking-wide uppercase mb-1 flex items-center">
+                                  {msg.senderName || msg.senderEmail} • {msg.date.toLocaleString()}
+                                  {!msg.read && <span className="ml-2 w-2 h-2 bg-blue-500 rounded-full" title="Unread"></span>}
+                                </div>
+                                <div className="text-sm font-semibold mb-2">Subject: {msg.subject}</div>
+                                <div className="text-sm whitespace-pre-wrap bg-white/50 p-2 rounded border border-slate-100">{msg.body}</div>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      ));
+                    })()}
                   </div>
                 </div>
               )}

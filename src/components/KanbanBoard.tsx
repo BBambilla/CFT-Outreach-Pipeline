@@ -110,12 +110,20 @@ export const KanbanBoard: React.FC<{ sponsors: Sponsor[], archivedSponsors?: Spo
                   >
                     <h3 className="font-bold text-sm mb-1.5 text-slate-800 leading-tight">{sponsor.organization}</h3>
                     <p className="text-xs text-slate-500 mb-3 truncate">{sponsor.contactName || 'No contact specified'}</p>
-                    <div className="flex items-center justify-between mt-auto">
-                       {sponsor.priority === 'High' ? (
-                         <span className="text-[10px] font-bold px-2 py-1 bg-red-100 text-red-700 rounded-md uppercase tracking-wide">Code Red</span>
-                       ) : <span />}
+                    <div className="flex items-center justify-between mt-auto gap-2">
+                       <div className="flex gap-1.5 flex-wrap">
+                         {sponsor.has_new_reply && (
+                           <span className="text-[10px] font-bold px-2 py-1 bg-blue-100 text-blue-700 rounded-md uppercase tracking-wide flex items-center shadow-sm">
+                             <div className="w-1.5 h-1.5 rounded-full bg-blue-500 mr-1 animate-pulse"></div>
+                             New Response
+                           </span>
+                         )}
+                         {sponsor.priority === 'High' ? (
+                           <span className="text-[10px] font-bold px-2 py-1 bg-red-100 text-red-700 rounded-md uppercase tracking-wide">Code Red</span>
+                         ) : null}
+                       </div>
                        {owner ? (
-                         <span className="text-[10px] font-medium text-slate-500 bg-slate-100 px-2 py-1 rounded-md truncate max-w-[120px] border border-slate-200">
+                         <span className="text-[10px] font-medium text-slate-500 bg-slate-100 px-2 py-1 rounded-md truncate max-w-[120px] border border-slate-200 ml-auto shrink-0">
                             {owner.name}
                          </span>
                        ) : <span />}
@@ -156,12 +164,20 @@ export const KanbanBoard: React.FC<{ sponsors: Sponsor[], archivedSponsors?: Spo
                 >
                   <h3 className="font-bold text-sm mb-1.5 text-slate-800 leading-tight">{sponsor.organization}</h3>
                   <p className="text-xs text-slate-500 mb-3 truncate">{sponsor.contactName || 'No contact specified'}</p>
-                  <div className="flex items-center justify-between mt-auto">
-                      {sponsor.priority === 'High' ? (
-                        <span className="text-[10px] font-bold px-2 py-1 bg-slate-200 text-slate-600 rounded-md uppercase tracking-wide">Code Red</span>
-                      ) : <span />}
+                  <div className="flex items-center justify-between mt-auto gap-2">
+                      <div className="flex gap-1.5 flex-wrap">
+                        {sponsor.has_new_reply && (
+                          <span className="text-[10px] font-bold px-2 py-1 bg-blue-100 text-blue-700 rounded-md uppercase tracking-wide flex items-center shadow-sm">
+                            <div className="w-1.5 h-1.5 rounded-full bg-blue-500 mr-1"></div>
+                            New Response
+                          </span>
+                        )}
+                        {sponsor.priority === 'High' ? (
+                          <span className="text-[10px] font-bold px-2 py-1 bg-slate-200 text-slate-600 rounded-md uppercase tracking-wide">Code Red</span>
+                        ) : null}
+                      </div>
                       {owner ? (
-                        <span className="text-[10px] font-medium text-slate-500 bg-slate-200 px-2 py-1 rounded-md truncate max-w-[120px] border border-slate-300">
+                        <span className="text-[10px] font-medium text-slate-500 bg-slate-200 px-2 py-1 rounded-md truncate max-w-[120px] border border-slate-300 ml-auto shrink-0">
                           {owner.name}
                         </span>
                       ) : <span />}

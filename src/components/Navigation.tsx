@@ -1,15 +1,32 @@
 import React, { useState } from 'react';
 import { useAppContext } from '../context/AppContext';
-import { Layers, Presentation, Compass, Users, LogOut, LifeBuoy } from 'lucide-react';
+import { Layers, Presentation, Compass, Users, LogOut, LifeBuoy, Bell } from 'lucide-react';
 import { Logo } from './Logo';
 import { RequestSupportModal } from './RequestSupportModal';
+import { SponsorDetailModal } from './SponsorDetailModal';
 
 export const Navigation: React.FC = () => {
-  const { role, setRole, currentUser, students, setCurrentUser, currentView, setCurrentView, setIsAuthenticated, signOut } = useAppContext();
+  const { role, setRole, currentUser, students, sponsors, setCurrentUser, currentView, setCurrentView, setIsAuthenticated, signOut } = useAppContext();
   const [isSupportModalOpen, setIsSupportModalOpen] = useState(false);
+  const [isInboxOpen, setIsInboxOpen] = useState(false);
+  const [selectedSponsorId, setSelectedSponsorId] = useState<string | null>(null);
 
   const handleLogout = async () => {
     await signOut();
+  };
+
+  const newResponseSponsors = sponsors
+    .filter(s => s.has_new_reply)
+    .sort((a, b) => new Date(b.last_reply_at || 0).getTime() - new Date(a.last_reply_at || 0).getTime());
+
+  const statusBorderColors: Record<string, string> = {
+    'To Research': 'border-t-slate-400',
+    'Ready to Contact': 'border-t-brand-canary',
+    'Contacted': 'border-t-brand-yellow',
+    'In Conversation': 'border-t-brand-orange shadow-brand-orange/20 shadow-md',
+    'Committed': 'border-t-sdg-green',
+    'Registered / Enrolled': 'border-t-teal-500',
+    'Declined': 'grayscale border-t-slate-200'
   };
 
   return (
@@ -48,6 +65,66 @@ export const Navigation: React.FC = () => {
           </div>
           
           <div className="flex items-center gap-4">
+            
+            <div className="relative">
+              <button
+                onClick={() => setIsInboxOpen(!isInboxOpen)}
+                className="p-2 text-white/90 hover:bg-white/20 hover:text-white rounded-lg transition-colors relative"
+              >
+                <Bell size={20} />
+                {newResponseSponsors.length > 0 && (
+                  <span className="absolute top-1 right-1 w-4 h-4 bg-red-500 text-white text-[10px] font-bold flex items-center justify-center rounded-full border-2 border-brand-yellow">
+                    {newResponseSponsors.length}
+                  </span>
+                )}
+              </button>
+              
+              {isInboxOpen && (
+                <div className="absolute right-0 mt-2 w-[340px] bg-white border border-slate-200 rounded-xl shadow-xl overflow-hidden z-50 flex flex-col max-h-[80vh]">
+                  <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+                    <h3 className="font-bold text-slate-800 text-sm">New Responses</h3>
+                    <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">{newResponseSponsors.length} new</span>
+                  </div>
+                  <div className="overflow-y-auto p-2 space-y-2 flex-1">
+                    {newResponseSponsors.length === 0 ? (
+                      <div className="text-sm text-center text-slate-500 py-8">No new responses</div>
+                    ) : (
+                      newResponseSponsors.map(sponsor => {
+                        const owner = students.find(s => s.id === sponsor.assignedStudentId);
+                        return (
+                          <div
+                            key={sponsor.id}
+                            onClick={() => {
+                              setSelectedSponsorId(sponsor.id);
+                              setIsInboxOpen(false);
+                            }}
+                            className={`p-3 rounded-xl block border shadow-sm border-t-4 cursor-pointer transition-all bg-white hover:border-brand-orange hover:shadow-md ${statusBorderColors[sponsor.status] || 'border-t-slate-200'}`}
+                          >
+                            <h3 className="font-bold text-sm mb-1.5 text-slate-800 leading-tight">{sponsor.organization}</h3>
+                            <p className="text-xs text-slate-500 mb-3 truncate">{sponsor.contactName || 'No contact specified'}</p>
+                            <div className="flex items-center justify-between mt-auto gap-2">
+                               <div className="flex gap-1.5 flex-wrap">
+                                 <span className="text-[10px] font-bold px-2 py-1 bg-blue-100 text-blue-700 rounded-md uppercase tracking-wide flex items-center shadow-sm">
+                                   <div className="w-1.5 h-1.5 rounded-full bg-blue-500 mr-1 animate-pulse"></div>
+                                   Response
+                                 </span>
+                                 <span className="text-[10px] font-bold px-2 py-1 bg-slate-100 text-slate-600 rounded-md uppercase tracking-wide border border-slate-200">{sponsor.status}</span>
+                               </div>
+                               {owner ? (
+                                 <span className="text-[10px] font-medium text-slate-500 bg-slate-100 px-2 py-1 rounded-md truncate max-w-[120px] border border-slate-200 ml-auto shrink-0">
+                                    {owner.name}
+                                 </span>
+                               ) : <span />}
+                            </div>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
             <div className="text-right hidden md:block">
               <div className="text-sm font-bold text-white tracking-tight drop-shadow-sm">
                 {role === 'student' ? currentUser?.name : (currentUser?.name || 'Coordinator')}
@@ -80,6 +157,9 @@ export const Navigation: React.FC = () => {
       </div>
       {isSupportModalOpen && (
         <RequestSupportModal onClose={() => setIsSupportModalOpen(false)} />
+      )}
+      {selectedSponsorId && (
+        <SponsorDetailModal sponsorId={selectedSponsorId} onClose={() => setSelectedSponsorId(null)} />
       )}
     </nav>
   );

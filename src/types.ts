@@ -44,6 +44,8 @@ export interface Sponsor {
   researchNotes: string;
   status: SponsorStatus;
   priority: 'High' | 'Medium' | 'Low';
+  has_new_reply?: boolean;
+  last_reply_at?: string;
   lastContactedAt?: string;
   nextFollowupDate?: string;
   archived?: boolean;
@@ -87,6 +89,17 @@ export interface KnowledgeBaseFile {
   uploadedAt: string;
   size?: number; // Size in bytes
   type?: string;
+}
+
+export interface InboundMessage {
+  id: string;
+  sponsor_id: string;
+  sender_name: string;
+  sender_email: string;
+  subject: string;
+  body_text: string;
+  received_at: string;
+  read: boolean;
 }
 
 export interface SupportRequest {
