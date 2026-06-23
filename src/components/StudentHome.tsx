@@ -46,7 +46,7 @@ export const StudentHome: React.FC = () => {
   if (!currentUser) return null;
 
   const countryStudents = students.filter(s => s.country === currentUser.country).map(s => s.id);
-  const countrySponsors = sponsors.filter(s => countryStudents.includes(s.assignedStudentId) && !s.archived);
+  const countrySponsors = sponsors.filter(s => !s.archived);
   const myArchivedSponsors = sponsors.filter(s => s.assignedStudentId === currentUser.id && s.archived);
 
   const stats = {

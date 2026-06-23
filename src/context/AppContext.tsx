@@ -241,29 +241,38 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   useEffect(() => {
     if (!supabase || !isAuthenticated) return;
     
+    let debounceTimer: NodeJS.Timeout;
+    const triggerLoad = () => {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        loadData('');
+      }, 1500);
+    };
+
     // Subscribe to realtime changes
     const channel = supabase.channel('schema-changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'sponsors' }, payload => {
-        loadData(currentUser?.id || '');
+        triggerLoad();
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'interactions' }, payload => {
-        loadData(currentUser?.id || '');
+        triggerLoad();
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'templates' }, payload => {
-        loadData(currentUser?.id || '');
+        triggerLoad();
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'resources' }, payload => {
-        loadData(currentUser?.id || '');
+        triggerLoad();
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'knowledge_base_files' }, payload => {
-        loadData(currentUser?.id || '');
+        triggerLoad();
       })
       .subscribe();
 
     return () => {
+      clearTimeout(debounceTimer);
       supabase!.removeChannel(channel);
     };
-  }, [isAuthenticated, currentUser?.id, loadData]);
+  }, [isAuthenticated]);
 
   const signOut = async () => {
     if (supabase) await supabase.auth.signOut();
