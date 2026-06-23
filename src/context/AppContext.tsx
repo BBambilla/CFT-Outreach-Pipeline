@@ -2,10 +2,13 @@ import React, { createContext, useContext, useState, ReactNode, useEffect, useCa
 import { supabase } from '../lib/supabase';
 import { Student, Sponsor, Interaction, EmailTemplate, Resource, KnowledgeBaseFile, ViewType, SponsorStatus } from '../types';
 
+export type ProfileStatus = 'idle' | 'loading' | 'found' | 'not-setup' | 'error';
+
 interface AppContextType {
   isAuthenticated: boolean;
   setIsAuthenticated: (auth: boolean) => void;
-  isLoading: boolean;
+  profileStatus: ProfileStatus;
+  retryLoadProfile: () => void;
   role: 'student' | 'coordinator';
   setRole: (role: 'student' | 'coordinator') => void;
   currentView: ViewType;
@@ -31,7 +34,10 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const [profileStatus, setProfileStatus] = useState<ProfileStatus>('loading');
+  const [authSession, setAuthSession] = useState<any>(null);
+  const loadAttemptRef = React.useRef(false);
+  
   const [role, setRole] = useState<'student' | 'coordinator'>('student');
   const [currentView, setCurrentView] = useState<ViewType>('pipeline');
   const [currentUser, setCurrentUser] = useState<Student | null>(null);
@@ -134,47 +140,93 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
   }, []);
 
-  const handleUserSignIn = useCallback(async (user: any) => {
+  const performLoad = async (user: any) => {
     if (!supabase) return;
+    if (profileStatus === 'found' || loadAttemptRef.current) return;
+    
+    loadAttemptRef.current = true;
+    setProfileStatus('loading');
+    
+    let isTimeout = false;
+    const timeoutId = setTimeout(() => {
+      isTimeout = true;
+      setProfileStatus('error');
+      loadAttemptRef.current = false;
+    }, 12000);
+
     try {
-      const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single();
-      if (profile) {
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .maybeSingle();
+
+      if (isTimeout) return;
+      clearTimeout(timeoutId);
+
+      if (error) {
+        setProfileStatus('error');
+        loadAttemptRef.current = false;
+        return;
+      }
+
+      if (profile && profile.role) {
         setRole(profile.role === 'coordinator' ? 'coordinator' : 'student');
         
-        // Find matching student object right away if we have students loaded
         if (profile.student_id) {
-           const { data: stData } = await supabase.from('students').select('*').eq('id', profile.student_id).single();
-           if (stData) { setCurrentUser(stData); }
+           const { data: stData } = await supabase.from('students').select('*').eq('id', profile.student_id).maybeSingle();
+           if (!isTimeout && stData) { setCurrentUser(stData); }
         }
         
-        await loadData(profile.student_id);
-        setIsAuthenticated(true);
+        if (!isTimeout) {
+          await loadData(profile.student_id);
+          if (!isTimeout) {
+            setIsAuthenticated(true);
+            setProfileStatus('found');
+          }
+        }
+      } else {
+        setProfileStatus('not-setup');
       }
     } catch (err) {
-      console.error('Failed to fetch profile', err);
+      if (isTimeout) return;
+      clearTimeout(timeoutId);
+      setProfileStatus('error');
     } finally {
-      setIsLoading(false);
+      if (!isTimeout) {
+        loadAttemptRef.current = false;
+      }
     }
-  }, [loadData]);
+  };
+
+  const retryLoadProfile = useCallback(() => {
+    if (authSession && !loadAttemptRef.current) {
+      performLoad(authSession);
+    }
+  }, [authSession]);
 
   useEffect(() => {
     if (!supabase) return;
     
-    setIsLoading(true);
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
-        handleUserSignIn(session.user);
+        setAuthSession(session.user);
+        performLoad(session.user);
       } else {
-        setIsLoading(false);
+        setProfileStatus('idle');
       }
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session?.user) {
-        handleUserSignIn(session.user);
-      } else {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN') {
+        if (session?.user) {
+          setAuthSession(session.user);
+          performLoad(session.user);
+        }
+      } else if (event === 'SIGNED_OUT') {
+        setAuthSession(null);
         setIsAuthenticated(false);
-        setIsLoading(false);
+        setProfileStatus('idle');
         setCurrentUser(null);
         setSponsors([]);
         setInteractions([]);
@@ -184,7 +236,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     return () => {
       subscription.unsubscribe();
     };
-  }, [handleUserSignIn]);
+  }, []);
 
   useEffect(() => {
     if (!supabase || !isAuthenticated) return;
@@ -349,7 +401,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   return (
     <AppContext.Provider value={{
-      isAuthenticated, setIsAuthenticated, isLoading,
+      isAuthenticated, setIsAuthenticated, profileStatus, retryLoadProfile,
       role, setRole,
       currentView, setCurrentView,
       currentUser, setCurrentUser,
