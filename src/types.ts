@@ -111,6 +111,8 @@ export interface SupportRequest {
   subject: string;
   message: string;
   created_at: string;
+  status: 'pending' | 'actioned';
+  category: 'Registry' | 'CFT Training';
 }
 
 export type ViewType = 'pipeline' | 'knowledgeBase';

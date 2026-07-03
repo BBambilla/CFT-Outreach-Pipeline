@@ -11,6 +11,7 @@ export const RequestSupportModal: React.FC<RequestSupportModalProps> = ({ onClos
   const { currentUser, role } = useAppContext();
   const [subject, setSubject] = useState('');
   const [message, setMessage] = useState('');
+  const [category, setCategory] = useState<'Registry' | 'CFT Training' | ''>('');
   const [isSending, setIsSending] = useState(false);
   const [isSent, setIsSent] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -22,8 +23,8 @@ export const RequestSupportModal: React.FC<RequestSupportModalProps> = ({ onClos
       const fromEmail = role === 'coordinator' ? 'olly@thesunprogram.com' : currentUser?.email;
       const repName = currentUser?.name || 'Unknown';
       const countryStr = currentUser?.country || 'Unknown';
-      const toAddresses = ["pratishtha@thesunprogram.com", "hans@thesunprogram.com"];
-      const subjectLine = `Support request from ${countryStr}`;
+      const toAddress = category === 'Registry' ? 'hans@thesunprogram.com' : 'pratishtha@thesunprogram.com';
+      const subjectLine = `Support request (${category}) from ${countryStr}`;
       const bodyStr = `Name: ${repName}\nCountry: ${countryStr}\nSubject: ${subject}\n\n${message}`;
 
       const res = await fetch('/api/send-email', {
@@ -31,7 +32,7 @@ export const RequestSupportModal: React.FC<RequestSupportModalProps> = ({ onClos
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           from: fromEmail,
-          to: toAddresses.join(','),
+          to: toAddress,
           subject: subjectLine,
           body: bodyStr,
         })
@@ -46,7 +47,8 @@ export const RequestSupportModal: React.FC<RequestSupportModalProps> = ({ onClos
         rep_name: repName,
         country: countryStr,
         subject,
-        message
+        message,
+        category
       });
 
       setIsSent(true);
@@ -100,6 +102,18 @@ export const RequestSupportModal: React.FC<RequestSupportModalProps> = ({ onClos
           )}
           <div className="space-y-4">
             <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Category</label>
+              <select
+                value={category}
+                onChange={(e) => setCategory(e.target.value as any)}
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-yellow focus:border-brand-yellow outline-none text-sm bg-white"
+              >
+                <option value="" disabled>Select a category</option>
+                <option value="Registry">Registry</option>
+                <option value="CFT Training">CFT Training</option>
+              </select>
+            </div>
+            <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">Subject</label>
               <input
                 type="text"
@@ -131,7 +145,7 @@ export const RequestSupportModal: React.FC<RequestSupportModalProps> = ({ onClos
           </button>
           <button
             onClick={handleSend}
-            disabled={!subject.trim() || !message.trim() || isSending}
+            disabled={!subject.trim() || !message.trim() || !category || isSending}
             className="px-4 py-2 text-sm font-semibold text-white bg-brand-orange hover:bg-orange-700 flex items-center justify-center disabled:opacity-50 rounded-lg transition-colors shadow-sm"
           >
             {isSending ? <Loader2 size={16} className="animate-spin" /> : 'Send'}

@@ -107,6 +107,11 @@ export const SponsorDetailModal: React.FC<{ sponsorId: string, onClose: () => vo
         filename: "Supporting National Climate Resilience.pdf",
         url: "https://jpftaqubuokdthecsmmx.supabase.co/storage/v1/object/public/attachments/Supporting_National_Climate_Resilience.pdf"
       }]);
+    } else if (template.title === 'Registry Outreach' && currentUser?.name) {
+      setDraftAttachments([{
+        filename: `${currentUser.name.trim()} - CFT Registry.pdf`,
+        url: `https://jpftaqubuokdthecsmmx.supabase.co/storage/v1/object/public/attachments/registry/${encodeURIComponent(currentUser.name.trim())}.pdf`
+      }]);
     } else {
       setDraftAttachments([]);
     }

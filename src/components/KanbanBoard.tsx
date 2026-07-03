@@ -71,7 +71,7 @@ export const KanbanBoard: React.FC<{ sponsors: Sponsor[], archivedSponsors?: Spo
   };
 
   return (
-    <div className="flex flex-1 space-x-6 overflow-x-auto pb-4 scrollbar-hide min-h-[400px]">
+    <div className="flex flex-1 space-x-4 sm:space-x-6 overflow-x-auto pb-4 scrollbar-hide min-h-[400px]">
       {PILELINE_STATUSES.map(status => {
         if (status === 'Committed' && role !== 'coordinator') return null;
         
@@ -82,7 +82,7 @@ export const KanbanBoard: React.FC<{ sponsors: Sponsor[], archivedSponsors?: Spo
         return (
           <div 
             key={status}
-            className={`min-w-[280px] w-[320px] flex flex-col p-3 rounded-xl border ${theme.colBg} ${isDeclined ? 'opacity-60' : ''}`}
+            className={`min-w-[85vw] sm:min-w-[280px] w-[85vw] sm:w-[320px] flex flex-col p-3 rounded-xl border ${theme.colBg} ${isDeclined ? 'opacity-60' : ''} shrink-0`}
             onDragOver={handleDragOver}
             onDrop={(e) => handleDrop(e, status)}
           >
@@ -143,7 +143,7 @@ export const KanbanBoard: React.FC<{ sponsors: Sponsor[], archivedSponsors?: Spo
       
       {archivedSponsors && (
         <div 
-          className="min-w-[280px] w-[320px] flex flex-col p-3 rounded-xl border bg-slate-50 border-slate-200 opacity-60"
+          className="min-w-[85vw] sm:min-w-[280px] w-[85vw] sm:w-[320px] flex flex-col p-3 rounded-xl border bg-slate-50 border-slate-200 opacity-60 shrink-0"
         >
           <div className="flex items-center justify-between mb-4 px-1">
             <span className="text-[13px] font-bold uppercase tracking-wider text-slate-500">Sponsorship</span>

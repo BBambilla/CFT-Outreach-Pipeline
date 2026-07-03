@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useAppContext } from '../context/AppContext';
-import { Layers, Presentation, Compass, Users, LogOut, LifeBuoy, Bell, CheckCircle2 } from 'lucide-react';
+import { Layers, Presentation, Compass, Users, LogOut, LifeBuoy, Bell, CheckCircle2, Menu, X } from 'lucide-react';
 import { Logo } from './Logo';
 import { RequestSupportModal } from './RequestSupportModal';
 import { SponsorDetailModal } from './SponsorDetailModal';
@@ -12,6 +12,18 @@ export const Navigation: React.FC = () => {
   const [isInboxOpen, setIsInboxOpen] = useState(false);
   const [selectedSponsorId, setSelectedSponsorId] = useState<string | null>(null);
   const [clearingIds, setClearingIds] = useState<Set<string>>(new Set());
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const inboxRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (inboxRef.current && !inboxRef.current.contains(event.target as Node)) {
+        setIsInboxOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const handleLogout = async () => {
     await signOut();
@@ -33,15 +45,21 @@ export const Navigation: React.FC = () => {
 
   return (
     <nav className="fixed top-0 w-full bg-brand-yellow border-b border-yellow-600/30 z-50 h-16 shrink-0 shadow-sm">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full">
+      <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8 h-full">
         <div className="flex justify-between h-full items-center">
           <div className="flex items-center">
-            <div className="w-14 h-14 mr-3 flex-shrink-0 bg-white rounded-full flex items-center justify-center shadow-sm p-1">
+            <button 
+              className="md:hidden p-2 text-white/90 hover:bg-white/20 hover:text-white rounded-lg transition-colors mr-1"
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            >
+              {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+            </button>
+            <div className="w-10 h-10 sm:w-14 sm:h-14 mr-2 sm:mr-3 flex-shrink-0 bg-white rounded-full flex items-center justify-center shadow-sm p-1">
               <Logo className="w-full h-full" />
             </div>
-            <span className="font-bold text-xl tracking-tight text-white mr-8 font-heading drop-shadow-sm">CFT Sponsor Outreach</span>
+            <span className="hidden sm:block font-bold text-lg sm:text-xl tracking-tight text-white mr-4 sm:mr-8 font-heading drop-shadow-sm truncate">CFT Outreach</span>
             
-            <div className="hidden sm:flex sm:space-x-4 border-l border-white/20 pl-6 h-full items-center">
+            <div className="hidden md:flex md:space-x-2 lg:space-x-4 border-l border-white/20 pl-4 lg:pl-6 h-full items-center">
               <button 
                 onClick={() => setCurrentView('pipeline')}
                 className={`${currentView === 'pipeline' ? 'text-brand-orange bg-white' : 'text-white/90 hover:bg-white/20 hover:text-white'} px-3 py-2 rounded-md text-sm font-bold transition-colors`}
@@ -60,15 +78,15 @@ export const Navigation: React.FC = () => {
                   className="flex items-center gap-2 text-white/90 hover:bg-white/20 hover:text-white px-3 py-2 rounded-md text-sm font-bold transition-colors ml-2"
                 >
                   <LifeBuoy size={16} />
-                  <span>Request Support</span>
+                  <span>Support</span>
                 </button>
               )}
             </div>
           </div>
           
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 sm:gap-4">
             
-            <div className="relative">
+            <div className="relative" ref={inboxRef}>
               <button
                 onClick={() => setIsInboxOpen(!isInboxOpen)}
                 className="p-2 text-white/90 hover:bg-white/20 hover:text-white rounded-lg transition-colors relative"
@@ -82,7 +100,7 @@ export const Navigation: React.FC = () => {
               </button>
               
               {isInboxOpen && (
-                <div className="absolute right-0 mt-2 w-[340px] bg-white border border-slate-200 rounded-xl shadow-xl overflow-hidden z-50 flex flex-col max-h-[80vh]">
+                <div className="absolute right-0 mt-2 w-[300px] sm:w-[340px] bg-white border border-slate-200 rounded-xl shadow-xl overflow-hidden z-50 flex flex-col max-h-[80vh]">
                   <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
                     <h3 className="font-bold text-slate-800 text-sm">New Responses</h3>
                     <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">{newResponseSponsors.length} new</span>
@@ -129,12 +147,11 @@ export const Navigation: React.FC = () => {
                                   title="Mark as read"
                                 >
                                   <CheckCircle2 size={12} />
-                                  Mark Read
+                                  Read
                                 </button>
-                                 <span className="text-[10px] font-bold px-2 py-1 bg-slate-100 text-slate-600 rounded-md uppercase tracking-wide border border-slate-200">{sponsor.status}</span>
                                </div>
                                {owner ? (
-                                 <span className="text-[10px] font-medium text-slate-500 bg-slate-100 px-2 py-1 rounded-md truncate max-w-[120px] border border-slate-200 ml-auto shrink-0">
+                                 <span className="text-[10px] font-medium text-slate-500 bg-slate-100 px-2 py-1 rounded-md truncate max-w-[100px] border border-slate-200 ml-auto shrink-0">
                                     {owner.name}
                                  </span>
                                ) : <span />}
@@ -156,21 +173,13 @@ export const Navigation: React.FC = () => {
                 {role === 'student' ? currentUser?.country : (currentUser ? 'Admin' : 'Global Overview')}
               </div>
             </div>
-            {role === 'student' && (
-              <button
-                onClick={() => setIsSupportModalOpen(true)}
-                title="Request Support"
-                className="md:hidden p-2 text-white/90 hover:bg-white/20 hover:text-white rounded-lg transition-colors"
-              >
-                <LifeBuoy size={20} />
-              </button>
-            )}
-            <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center text-white border border-white/30 shadow-sm">
+            
+            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-white/20 rounded-full flex items-center justify-center text-white border border-white/30 shadow-sm shrink-0">
               {role === 'coordinator' ? <Presentation size={18} /> : <Users size={18} />}
             </div>
             <button 
               onClick={handleLogout}
-              className="ml-2 p-2 text-white/80 hover:text-white hover:bg-white/20 rounded-lg transition-colors"
+              className="p-2 text-white/80 hover:text-white hover:bg-white/20 rounded-lg transition-colors shrink-0"
               title="Sign out"
             >
               <LogOut size={20} />
@@ -178,6 +187,44 @@ export const Navigation: React.FC = () => {
           </div>
         </div>
       </div>
+      
+      {/* Mobile Menu */}
+      {isMobileMenuOpen && (
+        <div className="md:hidden bg-brand-orange border-b border-orange-600 shadow-md">
+          <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+            <button 
+              onClick={() => { setCurrentView('pipeline'); setIsMobileMenuOpen(false); }}
+              className={`block w-full text-left px-3 py-3 rounded-md text-base font-bold transition-colors ${currentView === 'pipeline' ? 'text-brand-orange bg-white' : 'text-white/90 hover:bg-white/20 hover:text-white'}`}
+            >
+              Pipeline
+            </button>
+            <button 
+              onClick={() => { setCurrentView('knowledgeBase'); setIsMobileMenuOpen(false); }}
+              className={`block w-full text-left px-3 py-3 rounded-md text-base font-bold transition-colors ${currentView === 'knowledgeBase' ? 'text-brand-orange bg-white' : 'text-white/90 hover:bg-white/20 hover:text-white'}`}
+            >
+              Knowledge Base
+            </button>
+            {role === 'student' && (
+              <button
+                onClick={() => { setIsSupportModalOpen(true); setIsMobileMenuOpen(false); }}
+                className="w-full text-left flex items-center gap-2 text-white/90 hover:bg-white/20 hover:text-white px-3 py-3 rounded-md text-base font-bold transition-colors"
+              >
+                <LifeBuoy size={20} />
+                <span>Request Support</span>
+              </button>
+            )}
+            <div className="mt-4 pt-4 border-t border-white/20 px-3">
+              <div className="text-sm font-bold text-white">
+                {role === 'student' ? currentUser?.name : (currentUser?.name || 'Coordinator')}
+              </div>
+              <div className="text-xs text-white/80 font-medium">
+                {role === 'student' ? currentUser?.country : (currentUser ? 'Admin' : 'Global Overview')}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      
       {isSupportModalOpen && (
         <RequestSupportModal onClose={() => setIsSupportModalOpen(false)} />
       )}

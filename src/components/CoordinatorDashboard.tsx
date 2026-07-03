@@ -26,7 +26,12 @@ export const CoordinatorDashboard: React.FC = () => {
         .order('created_at', { ascending: false });
       
       if (data) {
-        setSupportRequests(data);
+        const sorted = data.sort((a, b) => {
+          if (a.status === 'pending' && b.status !== 'pending') return -1;
+          if (a.status !== 'pending' && b.status === 'pending') return 1;
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        });
+        setSupportRequests(sorted);
       }
     };
     
@@ -43,6 +48,25 @@ export const CoordinatorDashboard: React.FC = () => {
       supabase.removeChannel(subscription);
     };
   }, []);
+
+  const toggleSupportRequestStatus = async (id: string, currentStatus: string) => {
+    const newStatus = currentStatus === 'pending' ? 'actioned' : 'pending';
+    const { error } = await supabase.from('support_requests').update({ status: newStatus }).eq('id', id);
+    if (error) {
+      console.error('Failed to update status', error);
+      alert('Failed to update request status');
+    }
+  };
+
+  const handleSupportRequestDrop = async (e: React.DragEvent, targetStatus: 'pending' | 'actioned') => {
+    e.preventDefault();
+    const id = e.dataTransfer.getData('supportRequestId');
+    if (!id) return;
+    const req = supportRequests.find(r => r.id === id);
+    if (req && req.status !== targetStatus) {
+      await toggleSupportRequestStatus(id, req.status);
+    }
+  };
 
   const handleExportSupabase = async () => {
     try {
@@ -395,13 +419,13 @@ export const CoordinatorDashboard: React.FC = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-24">
-      <div className="flex justify-between items-end mb-8">
+      <div className="flex flex-col xl:flex-row justify-between items-start xl:items-end mb-8 gap-4">
         <div>
           <h1 className="text-2xl font-bold font-heading text-slate-900">Coordinator Workspace</h1>
           <p className="text-sm text-slate-500 mt-1">Overview of all student pipelines, global leads, and administrative tools.</p>
         </div>
-        <div className="flex items-center gap-3">
-          <div className="flex bg-slate-100 p-1 rounded-lg border border-slate-200">
+        <div className="flex flex-col lg:flex-row items-start lg:items-center gap-3">
+          <div className="flex flex-wrap bg-slate-100 p-1 rounded-lg border border-slate-200 gap-1">
             <button
               onClick={() => setView('reps')}
               className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${view === 'reps' ? 'bg-white text-brand-orange shadow-sm border border-slate-200/50' : 'text-slate-600 hover:text-slate-900'}`}
@@ -445,14 +469,14 @@ export const CoordinatorDashboard: React.FC = () => {
               Admin Leads
             </button>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <button 
               onClick={handleExportSupabase}
               className="flex items-center gap-2 px-4 py-2 bg-indigo-50 border border-indigo-200 text-indigo-700 rounded-lg text-sm font-semibold hover:bg-indigo-100 transition-colors shadow-sm"
               title="Download initial data for Supabase"
             >
               <Upload size={16} className="rotate-180" />
-              <span>Export</span>
+              <span className="hidden sm:inline">Export</span>
             </button>
             <input 
               type="file" 
@@ -467,7 +491,7 @@ export const CoordinatorDashboard: React.FC = () => {
               title="Upload CSV to current view"
             >
               <Upload size={16} />
-              <span>Upload CSV</span>
+              <span className="hidden sm:inline">Upload CSV</span>
             </button>
             <button 
               onClick={() => setIsAddingLead(true)}
@@ -480,37 +504,140 @@ export const CoordinatorDashboard: React.FC = () => {
         </div>
       </div>
 
-      {supportRequests.length > 0 && (
-        <div className="mb-8 bg-white border-2 border-brand-orange/20 rounded-xl shadow-md shadow-brand-orange/5 overflow-hidden">
-          <div className="px-6 py-4 border-b border-brand-orange/20 bg-orange-50/50 flex justify-between items-center">
-            <h2 className="text-lg font-bold font-heading text-orange-900 flex items-center">
-              <MessageCircle className="w-5 h-5 mr-2 text-brand-orange" />
-              Support Requests
-              <span className="ml-3 bg-brand-orange text-white text-xs py-0.5 px-2.5 rounded-full font-bold">
-                {supportRequests.length}
-              </span>
-            </h2>
-          </div>
-          <div className="divide-y divide-slate-100 max-h-[350px] overflow-y-auto">
-            {supportRequests.map(req => (
-              <div key={req.id} className="p-5 hover:bg-slate-50/50 transition-colors">
-                <div className="flex justify-between items-start mb-2">
-                  <div className="flex flex-col">
-                    <span className="font-bold text-slate-800 text-base">{req.subject}</span>
-                    <span className="text-sm font-medium text-slate-600 mt-1">
-                      {req.rep_name} <span className="text-slate-300 mx-1">•</span> <span className="text-brand-blue">{req.country}</span>
-                    </span>
-                  </div>
-                  <span className="text-xs text-slate-500 font-mono bg-white border border-slate-200 shadow-sm px-2 py-1 rounded-md">
-                    {new Date(req.created_at).toLocaleDateString()} {new Date(req.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+      {supportRequests.length > 0 && (() => {
+        const pendingRequests = supportRequests.filter(r => r.status === 'pending');
+        const actionedRequests = supportRequests.filter(r => r.status === 'actioned');
+
+        return (
+          <div className="mb-8 flex flex-col gap-6">
+            <div 
+              className="bg-white border-2 border-brand-orange/20 rounded-xl shadow-md shadow-brand-orange/5 overflow-hidden"
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={(e) => handleSupportRequestDrop(e, 'pending')}
+            >
+              <div className="px-6 py-4 border-b border-brand-orange/20 bg-orange-50/50 flex justify-between items-center">
+                <h2 className="text-lg font-bold font-heading text-orange-900 flex items-center">
+                  <MessageCircle className="w-5 h-5 mr-2 text-brand-orange" />
+                  Pending Support Requests
+                  <span className="ml-3 bg-brand-orange text-white text-xs py-0.5 px-2.5 rounded-full font-bold">
+                    {pendingRequests.length}
                   </span>
-                </div>
-                <p className="text-sm text-slate-700 whitespace-pre-wrap mt-3 bg-white p-3 rounded-lg border border-slate-100 shadow-sm">{req.message}</p>
+                </h2>
               </div>
-            ))}
+              <div className="divide-y divide-slate-100 max-h-[350px] overflow-y-auto min-h-[100px]">
+                {pendingRequests.length === 0 ? (
+                  <div className="p-8 text-center text-slate-500 text-sm flex flex-col items-center justify-center h-full">
+                    No pending support requests.
+                  </div>
+                ) : (
+                  pendingRequests.map(req => (
+                    <div 
+                      key={req.id} 
+                      className="p-5 hover:bg-slate-50/50 transition-colors cursor-move"
+                      draggable
+                      onDragStart={(e) => e.dataTransfer.setData('supportRequestId', req.id)}
+                    >
+                      <div className="flex justify-between items-start mb-2">
+                        <div className="flex flex-col">
+                          <div className="flex items-center gap-3">
+                            <span className="font-bold text-slate-800 text-base">{req.subject}</span>
+                            <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-brand-yellow/20 text-yellow-700">
+                              Pending
+                            </span>
+                            {req.category && (
+                              <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700">
+                                {req.category}
+                              </span>
+                            )}
+                          </div>
+                          <span className="text-sm font-medium text-slate-600 mt-1">
+                            {req.rep_name} <span className="text-slate-300 mx-1">•</span> <span className="text-brand-blue">{req.country}</span>
+                          </span>
+                        </div>
+                        <div className="flex flex-col items-end gap-2">
+                          <span className="text-xs text-slate-500 font-mono bg-white border border-slate-200 shadow-sm px-2 py-1 rounded-md">
+                            {new Date(req.created_at).toLocaleDateString()} {new Date(req.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                          </span>
+                          <button 
+                            onClick={() => toggleSupportRequestStatus(req.id, req.status)}
+                            className="text-xs px-2.5 py-1 rounded-md border font-medium transition-colors bg-green-50 border-green-200 text-green-700 hover:bg-green-100"
+                          >
+                            Mark as actioned
+                          </button>
+                        </div>
+                      </div>
+                      <p className="text-sm text-slate-700 whitespace-pre-wrap mt-3 bg-white p-3 rounded-lg border border-slate-100 shadow-sm">{req.message}</p>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+
+            <div 
+              className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden"
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={(e) => handleSupportRequestDrop(e, 'actioned')}
+            >
+              <div className="px-6 py-4 border-b border-slate-200 bg-slate-50 flex justify-between items-center">
+                <h2 className="text-lg font-bold font-heading text-slate-700 flex items-center">
+                  <MessageCircle className="w-5 h-5 mr-2 text-slate-400" />
+                  Actioned Support Requests
+                  <span className="ml-3 bg-slate-200 text-slate-600 text-xs py-0.5 px-2.5 rounded-full font-bold">
+                    {actionedRequests.length}
+                  </span>
+                </h2>
+              </div>
+              <div className="divide-y divide-slate-100 max-h-[350px] overflow-y-auto min-h-[100px]">
+                {actionedRequests.length === 0 ? (
+                  <div className="p-8 text-center text-slate-500 text-sm flex flex-col items-center justify-center h-full">
+                    No actioned support requests.
+                  </div>
+                ) : (
+                  actionedRequests.map(req => (
+                    <div 
+                      key={req.id} 
+                      className="p-5 hover:bg-slate-50/50 transition-colors cursor-move"
+                      draggable
+                      onDragStart={(e) => e.dataTransfer.setData('supportRequestId', req.id)}
+                    >
+                      <div className="flex justify-between items-start mb-2">
+                        <div className="flex flex-col">
+                          <div className="flex items-center gap-3">
+                            <span className="font-bold text-slate-800 text-base">{req.subject}</span>
+                            <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-green-100 text-green-700">
+                              Actioned
+                            </span>
+                            {req.category && (
+                              <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700">
+                                {req.category}
+                              </span>
+                            )}
+                          </div>
+                          <span className="text-sm font-medium text-slate-600 mt-1">
+                            {req.rep_name} <span className="text-slate-300 mx-1">•</span> <span className="text-brand-blue">{req.country}</span>
+                          </span>
+                        </div>
+                        <div className="flex flex-col items-end gap-2">
+                          <span className="text-xs text-slate-500 font-mono bg-white border border-slate-200 shadow-sm px-2 py-1 rounded-md">
+                            {new Date(req.created_at).toLocaleDateString()} {new Date(req.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                          </span>
+                          <button 
+                            onClick={() => toggleSupportRequestStatus(req.id, req.status)}
+                            className="text-xs px-2.5 py-1 rounded-md border font-medium transition-colors bg-white border-slate-300 text-slate-600 hover:bg-slate-50"
+                          >
+                            Mark as pending
+                          </button>
+                        </div>
+                      </div>
+                      <p className="text-sm text-slate-700 whitespace-pre-wrap mt-3 bg-white p-3 rounded-lg border border-slate-100 shadow-sm">{req.message}</p>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {view === 'overview' ? (
         <div className="space-y-8 mt-4">
@@ -866,11 +993,11 @@ export const CoordinatorDashboard: React.FC = () => {
           </div>
         </div>
       ) : view === 'pipeline' ? (
-        <div className="mt-8 flex-1 w-full bg-slate-50 border shadow-inner overflow-x-auto border-t border-slate-200 px-8 py-8 -ml-8 -mr-8 min-h-[500px]">
+        <div className="mt-8 flex-1 w-full bg-slate-50 border shadow-inner overflow-x-auto border-t border-slate-200 px-4 sm:px-6 lg:px-8 py-6 sm:py-8 -mx-4 sm:-mx-6 lg:-mx-8 min-h-[500px]">
           <KanbanBoard sponsors={activeSponsors} archivedSponsors={archivedSponsors} onSponsorClick={setSelectedSponsorId} />
         </div>
       ) : (
-        <div className="mt-8 flex-1 w-full bg-slate-50 border shadow-inner overflow-x-auto border-t border-slate-200 px-8 py-8 -ml-8 -mr-8 min-h-[500px]">
+        <div className="mt-8 flex-1 w-full bg-slate-50 border shadow-inner overflow-x-auto border-t border-slate-200 px-4 sm:px-6 lg:px-8 py-6 sm:py-8 -mx-4 sm:-mx-6 lg:-mx-8 min-h-[500px]">
           <KanbanBoard sponsors={adminSponsors} archivedSponsors={adminArchivedSponsors} onSponsorClick={setSelectedSponsorId} />
         </div>
       )}

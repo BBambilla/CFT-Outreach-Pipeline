@@ -74,20 +74,20 @@ export const StudentHome: React.FC = () => {
       </section>
 
       {/* Kanban Board */}
-      <section className="mt-8 flex-1 w-full bg-slate-50 border shadow-inner overflow-x-auto border-t border-slate-200 px-8 py-8 -ml-8 -mr-8 min-h-[500px]">
-        <div className="flex justify-between items-center mb-6">
+      <section className="mt-8 flex-1 w-full bg-slate-50 border shadow-inner overflow-x-auto border-t border-slate-200 px-4 sm:px-6 lg:px-8 py-6 sm:py-8 -mx-4 sm:-mx-6 lg:-mx-8 min-h-[500px]">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
           <h2 className="text-xl font-bold font-heading text-slate-800">My Pipeline</h2>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <button 
               onClick={() => setIsSupportModalOpen(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-white text-slate-700 border border-slate-300 rounded-lg text-sm font-semibold hover:bg-slate-50 transition-colors shadow-sm"
+              className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-white text-slate-700 border border-slate-300 rounded-lg text-sm font-semibold hover:bg-slate-50 transition-colors shadow-sm"
             >
               <LifeBuoy size={16} />
               <span className="hidden sm:inline">Request Support</span>
             </button>
             <button 
               onClick={() => setIsAddingLead(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-brand-orange text-white rounded-lg text-sm font-semibold hover:bg-orange-700 transition-colors shadow-sm"
+              className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-brand-orange text-white rounded-lg text-sm font-semibold hover:bg-orange-700 transition-colors shadow-sm"
             >
               <Plus size={16} />
               <span>New Lead</span>
@@ -128,7 +128,12 @@ export const StudentHome: React.FC = () => {
               supportRequests.map(req => (
                 <div key={req.id} className="p-5 hover:bg-slate-50 transition-colors">
                   <div className="flex justify-between items-start mb-2">
-                    <span className="font-bold text-slate-800 text-sm">{req.subject}</span>
+                    <div className="flex items-center gap-3">
+                      <span className="font-bold text-slate-800 text-sm">{req.subject}</span>
+                      <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${req.status === 'actioned' ? 'bg-green-100 text-green-700' : 'bg-brand-yellow/20 text-yellow-700'}`}>
+                        {req.status === 'actioned' ? 'Actioned' : 'Pending'}
+                      </span>
+                    </div>
                     <span className="text-xs text-slate-400 font-mono">
                       {new Date(req.created_at).toLocaleDateString()} {new Date(req.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                     </span>

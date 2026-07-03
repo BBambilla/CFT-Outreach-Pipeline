@@ -47,8 +47,8 @@ async function startServer() {
               throw new Error('Attachment must have content or url');
             }
           } catch (e: any) {
-            console.error(`Failed to fetch attachment ${att.filename}`, e);
-            attachmentNotes.push(`Could not attach ${att.filename}`);
+            console.warn(`Failed to fetch attachment ${att.filename}: ${e.message}`);
+            return res.status(400).json({ error: { message: `Could not attach ${att.filename}. The file might not exist.` } });
           }
         }
       }
