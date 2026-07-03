@@ -10,26 +10,26 @@ export default async function handler(req: any, res: any) {
   try {
     const payload =
       typeof req.body === 'string' ? JSON.parse(req.body || '{}') : (req.body || {});
-    const { from, fromName, subject, attachments } = payload;
+    const { from, fromName, subject, attachments, html } = payload;
     const text = payload.body ?? payload.text;
 
     const toList = Array.isArray(payload.to)
       ? payload.to
       : String(payload.to || '').split(/[,;]+/).map((s: string) => s.trim()).filter(Boolean);
 
-    if (!from || !subject || !text || toList.length === 0) {
+    if (!from || !subject || (!text && !html) || toList.length === 0) {
       return res.status(400).json({ ok: false, error: 'Missing required field' });
     }
 
     const resend = new Resend(process.env.RESEND_API_KEY);
-
     const emailOptions: any = {
       from: fromName ? `${fromName} <${from}>` : from,
       to: toList,
       subject,
-      text,
       replyTo: from,
     };
+    if (text) emailOptions.text = text;
+    if (html) emailOptions.html = html;
 
     if (Array.isArray(attachments) && attachments.length > 0) {
       emailOptions.attachments = attachments.map((a: any) =>

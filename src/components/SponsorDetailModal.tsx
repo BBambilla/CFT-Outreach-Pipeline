@@ -98,6 +98,11 @@ export const SponsorDetailModal: React.FC<{ sponsorId: string, onClose: () => vo
       subjectText = subjectText.replace(regex, value);
     }
 
+    const match = text.match(/\n+(Best(?: regards)?|Warm regards|Sincerely),[\s\S]*$/i);
+    if (match) {
+      text = text.replace(match[0], `\n\n${match[1]},`);
+    }
+
     setDraftEmail(text);
     setDraftSubject(subjectText);
     setIsComposing(true);
@@ -117,18 +122,36 @@ export const SponsorDetailModal: React.FC<{ sponsorId: string, onClose: () => vo
     }
   };
 
-  const handleNewEmail = () => {
-    let signature = `\n\nBest,\n${currentUser?.name || ''}\n${currentUser?.country || ''} Chapter Lead\nThe SUN Program`;
-    if (templates.length > 0) {
-      const templateBody = templates[0].body;
-      const match = templateBody.match(/\n\n(Best|Warm regards|Sincerely),[\s\S]*$/i);
-      if (match) {
-        signature = match[0]
-          .replace(/\[MyName\]/gi, currentUser?.name || '')
-          .replace(/\[MyCountry\]/gi, currentUser?.country || '');
-      }
+  const getSignature = () => {
+    const isRep = role !== 'coordinator';
+    if (isRep) {
+      return {
+        html: `<div style="font-family:Arial,sans-serif;font-size:10.5pt;line-height:1.2;color:#808080;margin-top:16px;">
+  <div>${currentUser?.name || ''}</div>
+  <div><strong>SUN<sup>x</sup> ${currentUser?.country || ''}</strong></div>
+  <div>${currentUser?.country || ''} Chapter Lead</div>
+  <div><a href="https://www.thesunprogram.com" style="color:#1155cc;">https://www.thesunprogram.com</a></div>
+  <div style="margin-top:10px;"><a href="https://youtu.be/QW3byaVLrZM" style="color:#1155cc;">Short Video About SUNx &amp; Climate Friendly Travel</a></div>
+</div>`,
+        plain: `${currentUser?.name || ''}\nSUNx ${currentUser?.country || ''}\n${currentUser?.country || ''} Chapter Lead\nhttps://www.thesunprogram.com\nShort Video About SUNx & Climate Friendly Travel: https://youtu.be/QW3byaVLrZM`
+      };
+    } else {
+      return {
+        html: `<div style="font-family:Arial,sans-serif;font-size:10.5pt;line-height:1.2;color:#808080;margin-top:16px;">
+  <div>Olly Wheatcroft</div>
+  <div><strong>SUN<sup>x</sup> Malta</strong></div>
+  <div>Programme Manager</div>
+  <div>m: +44 7765 132408</div>
+  <div><a href="https://www.thesunprogram.com" style="color:#1155cc;">https://www.thesunprogram.com</a></div>
+  <div style="margin-top:10px;"><a href="https://youtu.be/QW3byaVLrZM" style="color:#1155cc;">Short Video About SUNx &amp; Climate Friendly Travel</a></div>
+</div>`,
+        plain: `Olly Wheatcroft\nSUNx Malta\nProgramme Manager\nm: +44 7765 132408\nhttps://www.thesunprogram.com\nShort Video About SUNx & Climate Friendly Travel: https://youtu.be/QW3byaVLrZM`
+      };
     }
-    setDraftEmail(signature);
+  };
+
+  const handleNewEmail = () => {
+    setDraftEmail('\n\nBest regards,');
     setDraftSubject('');
     setDraftAttachments([]);
     setEmailError('');
@@ -419,6 +442,7 @@ export const SponsorDetailModal: React.FC<{ sponsorId: string, onClose: () => vo
                               rows={10}
                               className="w-full text-sm text-slate-900 border border-slate-200 rounded-md p-3 focus:outline-none focus:ring-1 focus:border-brand-orange leading-relaxed"
                             />
+                            <div className="mt-2 p-3 bg-gray-50 border border-gray-200 rounded-md text-sm text-gray-500 font-sans" dangerouslySetInnerHTML={{ __html: getSignature().html }} />
                             {draftAttachments.length > 0 && (
                               <div className="flex flex-wrap gap-2 text-sm text-slate-600 bg-slate-50 p-2 rounded-md border border-slate-200">
                                 <span className="font-semibold text-slate-700 mt-0.5">Attachments:</span>
@@ -469,6 +493,10 @@ export const SponsorDetailModal: React.FC<{ sponsorId: string, onClose: () => vo
                                   setIsSendingEmail(true);
                                   setEmailError('');
                                   try {
+                                    const sig = getSignature();
+                                    const formattedHtml = `<div style="font-family:Arial,sans-serif;font-size:11pt;line-height:1.4;color:#222;">${draftEmail.replace(/\n/g, '<br>')}</div>${sig.html}`;
+                                    const plainText = `${draftEmail}\n\n${sig.plain}`;
+
                                     const response = await fetch('/api/send-email', {
                                       method: 'POST',
                                       headers: { 'Content-Type': 'application/json' },
@@ -477,7 +505,8 @@ export const SponsorDetailModal: React.FC<{ sponsorId: string, onClose: () => vo
                                         fromName: currentUser?.name || 'Climate Friendly Travel',
                                         to: sponsor.email || '',
                                         subject: draftSubject,
-                                        body: draftEmail,
+                                        body: plainText,
+                                        html: formattedHtml,
                                         attachments: draftAttachments.length > 0 ? draftAttachments : undefined
                                       })
                                     });
