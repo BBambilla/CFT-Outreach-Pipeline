@@ -9,7 +9,8 @@ async function startServer() {
   const PORT = 3000;
 
   app.use(cors());
-  app.use(express.json());
+  app.use(express.json({ limit: '50mb' }));
+  app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
   app.post('/api/send-email', async (req, res) => {
     try {
@@ -26,16 +27,25 @@ async function startServer() {
       if (attachments && Array.isArray(attachments)) {
         for (const att of attachments) {
           try {
-            const resp = await fetch(att.url);
-            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-            
-            const buffer = await resp.arrayBuffer();
-            const base64Content = Buffer.from(buffer).toString('base64');
-            
-            resendAttachments.push({
-              filename: att.filename,
-              content: base64Content,
-            });
+            if (att.content) {
+              resendAttachments.push({
+                filename: att.filename,
+                content: att.content,
+              });
+            } else if (att.url) {
+              const resp = await fetch(att.url);
+              if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+              
+              const buffer = await resp.arrayBuffer();
+              const base64Content = Buffer.from(buffer).toString('base64');
+              
+              resendAttachments.push({
+                filename: att.filename,
+                content: base64Content,
+              });
+            } else {
+              throw new Error('Attachment must have content or url');
+            }
           } catch (e: any) {
             console.error(`Failed to fetch attachment ${att.filename}`, e);
             attachmentNotes.push(`Could not attach ${att.filename}`);

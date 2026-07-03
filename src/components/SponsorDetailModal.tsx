@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { Interaction, SponsorStatus, InboundMessage } from '../types';
 import { supabase } from '../lib/supabase';
-import { X, Search, Sparkles, Send, FileText, ChevronRight, PenSquare, ArrowRight, Trash2, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { X, Search, Sparkles, Send, FileText, ChevronRight, PenSquare, ArrowRight, Trash2, AlertCircle, CheckCircle2, Paperclip } from 'lucide-react';
 
 export const SponsorDetailModal: React.FC<{ sponsorId: string, onClose: () => void }> = ({ sponsorId, onClose }) => {
   const { sponsors, updateSponsor, deleteSponsor, addInteraction, interactions, templates, resources, currentUser, students, role } = useAppContext();
@@ -37,10 +37,14 @@ export const SponsorDetailModal: React.FC<{ sponsorId: string, onClose: () => vo
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>('');
   const [draftEmail, setDraftEmail] = useState<string>('');
   const [draftSubject, setDraftSubject] = useState<string>('');
-  const [draftAttachments, setDraftAttachments] = useState<{filename: string, url: string}[]>([]);
+  const [draftAttachments, setDraftAttachments] = useState<{filename: string, url?: string, content?: string}[]>([]);
   const [isSendingEmail, setIsSendingEmail] = useState(false);
   const [emailError, setEmailError] = useState<string>('');
   const [emailSuccess, setEmailSuccess] = useState<string>('');
+  const [isComposing, setIsComposing] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [newActivityType, setNewActivityType] = useState('Call');
   const [newActivityDetails, setNewActivityDetails] = useState('');
@@ -96,6 +100,7 @@ export const SponsorDetailModal: React.FC<{ sponsorId: string, onClose: () => vo
 
     setDraftEmail(text);
     setDraftSubject(subjectText);
+    setIsComposing(true);
 
     if (template.title === 'Sponsorship Outreach') {
       setDraftAttachments([{
@@ -105,6 +110,52 @@ export const SponsorDetailModal: React.FC<{ sponsorId: string, onClose: () => vo
     } else {
       setDraftAttachments([]);
     }
+  };
+
+  const handleNewEmail = () => {
+    let signature = `\n\nBest,\n${currentUser?.name || ''}\n${currentUser?.country || ''} Chapter Lead\nThe SUN Program`;
+    if (templates.length > 0) {
+      const templateBody = templates[0].body;
+      const match = templateBody.match(/\n\n(Best|Warm regards|Sincerely),[\s\S]*$/i);
+      if (match) {
+        signature = match[0]
+          .replace(/\[MyName\]/gi, currentUser?.name || '')
+          .replace(/\[MyCountry\]/gi, currentUser?.country || '');
+      }
+    }
+    setDraftEmail(signature);
+    setDraftSubject('');
+    setDraftAttachments([]);
+    setEmailError('');
+    setIsComposing(true);
+  };
+
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    setIsUploading(true);
+
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      const safeName = file.name.replace(/[^a-zA-Z0-9.-]/g, '-');
+      const path = `outreach/${Date.now()}-${safeName}`;
+      
+      const { error } = await supabase.storage.from('attachments').upload(path, file);
+      
+      if (error) {
+        console.error("Upload error:", error);
+        alert(`Failed to upload ${file.name}: ${error.message}`);
+        continue;
+      }
+      
+      const { data } = supabase.storage.from('attachments').getPublicUrl(path);
+      
+      setDraftAttachments(prev => [...prev, { filename: file.name, url: data.publicUrl }]);
+    }
+
+    setIsUploading(false);
+    e.target.value = '';
   };
 
   return (
@@ -321,7 +372,7 @@ export const SponsorDetailModal: React.FC<{ sponsorId: string, onClose: () => vo
                               Write another email
                             </button>
                           </div>
-                        ) : !draftEmail ? (
+                        ) : !draftEmail && !isComposing ? (
                           <div className="flex gap-3 items-end">
                             <div className="flex-1">
                               <label className="block text-xs text-gray-500 mb-1">Select Template</label>
@@ -341,6 +392,12 @@ export const SponsorDetailModal: React.FC<{ sponsorId: string, onClose: () => vo
                             >
                               <Sparkles className="w-4 h-4 mr-2 text-brand-orange" /> Personalize
                             </button>
+                            <button 
+                              onClick={handleNewEmail}
+                              className="bg-white border border-slate-200 text-slate-700 px-4 py-2 rounded-md text-sm font-semibold hover:bg-slate-50 transition-colors flex items-center shadow-sm"
+                            >
+                              <PenSquare className="w-4 h-4 mr-2 text-slate-500" /> Write a new email
+                            </button>
                           </div>
                         ) : (
                           <div className="space-y-3 animate-in fade-in duration-300">
@@ -359,24 +416,50 @@ export const SponsorDetailModal: React.FC<{ sponsorId: string, onClose: () => vo
                             />
                             {draftAttachments.length > 0 && (
                               <div className="flex flex-wrap gap-2 text-sm text-slate-600 bg-slate-50 p-2 rounded-md border border-slate-200">
-                                <span className="font-semibold text-slate-700">Attachments:</span>
+                                <span className="font-semibold text-slate-700 mt-0.5">Attachments:</span>
                                 {draftAttachments.map((att, i) => (
-                                  <span key={i} className="flex items-center gap-1 bg-white border border-slate-200 rounded px-2 py-0.5">
-                                    <FileText className="w-3.5 h-3.5 text-brand-orange" /> {att.filename}
+                                  <span key={i} className="flex items-center gap-1 bg-white border border-slate-200 rounded px-2 py-0.5 shadow-sm">
+                                    <FileText className="w-3.5 h-3.5 text-brand-orange" /> 
+                                    <span className="truncate max-w-[150px]" title={att.filename}>{att.filename}</span>
+                                    <button
+                                      onClick={() => setDraftAttachments(prev => prev.filter((_, idx) => idx !== i))}
+                                      className="text-slate-400 hover:text-red-500 ml-1 rounded-full hover:bg-slate-100 p-0.5 transition-colors"
+                                      title="Remove attachment"
+                                    >
+                                      <X className="w-3.5 h-3.5" />
+                                    </button>
                                   </span>
                                 ))}
                               </div>
                             )}
-                            <div className="flex justify-end gap-2 items-center flex-wrap">
-                              {emailError && (
-                                <div className="text-sm text-red-600 bg-red-50 px-3 py-1.5 rounded border border-red-100 flex items-center gap-2 mr-auto mb-2 w-full">
-                                  <AlertCircle className="w-4 h-4 shrink-0" />
-                                  <span className="break-all">{emailError}</span>
-                                </div>
-                              )}
-                              <button onClick={() => { setDraftEmail(''); setDraftSubject(''); setDraftAttachments([]); setEmailError(''); }} className="px-3 py-1.5 text-sm font-medium text-slate-500 hover:text-slate-700" disabled={isSendingEmail}>Discard</button>
-                              <button 
-                                disabled={isSendingEmail}
+                            <div className="flex justify-between gap-2 items-start flex-wrap">
+                              <div className="flex-shrink-0">
+                                <input 
+                                  type="file" 
+                                  multiple 
+                                  ref={fileInputRef} 
+                                  style={{ display: 'none' }} 
+                                  onChange={handleFileSelect}
+                                />
+                                <button 
+                                  onClick={() => fileInputRef.current?.click()}
+                                  className="text-sm font-medium text-slate-600 hover:text-brand-orange flex items-center bg-slate-100 hover:bg-orange-50 px-3 py-1.5 rounded-md transition-colors border border-slate-200 shadow-sm"
+                                  disabled={isSendingEmail || isUploading}
+                                >
+                                  <Paperclip className="w-4 h-4 mr-1.5" /> {isUploading ? 'Uploading...' : 'Attach document'}
+                                </button>
+                              </div>
+                              
+                              <div className="flex justify-end gap-2 items-center flex-wrap flex-1">
+                                {emailError && (
+                                  <div className="text-sm text-red-600 bg-red-50 px-3 py-1.5 rounded border border-red-100 flex items-center gap-2 mb-2 w-full">
+                                    <AlertCircle className="w-4 h-4 shrink-0" />
+                                    <span className="break-all">{emailError}</span>
+                                  </div>
+                                )}
+                                <button onClick={() => { setDraftEmail(''); setDraftSubject(''); setDraftAttachments([]); setEmailError(''); setIsComposing(false); }} className="px-3 py-1.5 text-sm font-medium text-slate-500 hover:text-slate-700" disabled={isSendingEmail}>Discard</button>
+                                <button 
+                                  disabled={isSendingEmail || !draftSubject.trim() || !draftEmail.trim() || !sponsor.email}
                                 onClick={async () => {
                                   setIsSendingEmail(true);
                                   setEmailError('');
@@ -410,6 +493,7 @@ export const SponsorDetailModal: React.FC<{ sponsorId: string, onClose: () => vo
                                       setDraftEmail('');
                                       setDraftSubject('');
                                       setDraftAttachments([]);
+                                      setIsComposing(false);
                                     } else {
                                       const errorData = await response.json().catch(() => ({}));
                                       setEmailError(errorData.error?.message || errorData.error || `Failed to send email (${response.status} ${response.statusText})`);
@@ -426,9 +510,10 @@ export const SponsorDetailModal: React.FC<{ sponsorId: string, onClose: () => vo
                               </button>
                             </div>
                           </div>
-                        )}
-                      </div>
-                    </>
+                        </div>
+                      )}
+                    </div>
+                  </>
                   )}
                   {!isOwner && (
                     <div className="bg-slate-50 border border-slate-200 rounded-xl p-8 text-center text-slate-500">
