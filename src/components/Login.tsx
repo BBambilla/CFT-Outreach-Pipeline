@@ -5,7 +5,7 @@ import { supabase } from '../lib/supabase';
 
 export const Login: React.FC = () => {
   const [loginMethod, setLoginMethod] = useState<'student' | 'coordinator'>('student');
-  const [coordinatorAccount, setCoordinatorAccount] = useState<'global' | 'olly'>('global');
+  const [coordinatorAccount, setCoordinatorAccount] = useState<'global' | 'olly' | 'combined'>('global');
   const [selectedStudentId, setSelectedStudentId] = useState<string>('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -70,6 +70,8 @@ export const Login: React.FC = () => {
       email = 'pratishtha@cft-app.local';
     } else if (coordinatorAccount === 'olly') {
       email = 'olly@cft-app.local';
+    } else if (coordinatorAccount === 'combined') {
+      email = 'chapters@thesunprogram.com';
     }
 
     const { error: authError } = await supabase.auth.signInWithPassword({
@@ -176,6 +178,7 @@ export const Login: React.FC = () => {
                 >
                   <option value="global">Admin (Pratishtha Parajuli)</option>
                   <option value="olly">Admin (Olly Wheatcroft)</option>
+                  <option value="combined">Admin (Combined – Full Access)</option>
                 </select>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Passcode / Password</label>
                 <div className="relative">
