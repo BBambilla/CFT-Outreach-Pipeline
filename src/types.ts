@@ -51,6 +51,11 @@ export interface Sponsor {
   archived?: boolean;
   archivedFromStatus?: string;
   createdAt: string;
+  submissionDate?: string;
+  country?: string;
+  enrolmentDate?: string;
+  trainingCompleted?: boolean;
+  certificateDate?: string;
 }
 
 export type InteractionType = 'Email sent' | 'Email received' | 'Call' | 'Text' | 'Online Meeting' | 'Face-to-Face Meeting' | 'LinkedIn' | 'Note' | 'File sent' | 'File received';

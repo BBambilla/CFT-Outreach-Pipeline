@@ -22,6 +22,19 @@ export const KanbanBoard: React.FC<{ sponsors: Sponsor[], archivedSponsors?: Spo
     }
   };
 
+  const getClassificationStyles = (classification?: string) => {
+    switch (classification) {
+      case 'Registry':
+        return { badge: 'bg-blue-100 text-blue-800', border: 'border-l-[3px] border-l-blue-500' };
+      case 'CFT Training':
+        return { badge: 'bg-green-100 text-green-800', border: 'border-l-[3px] border-l-green-500' };
+      case 'Sponsorships':
+        return { badge: 'bg-purple-100 text-purple-800', border: 'border-l-[3px] border-l-purple-500' };
+      default:
+        return { badge: 'bg-slate-100 text-slate-800', border: 'border-l-[3px] border-l-slate-300' };
+    }
+  };
+
   const statusBorderColors: Record<SponsorStatus, string> = {
     'To Research': 'border-t-slate-400',
     'Ready to Contact': 'border-t-brand-canary',
@@ -106,8 +119,13 @@ export const KanbanBoard: React.FC<{ sponsors: Sponsor[], archivedSponsors?: Spo
                       if (isOwner) handleDragStart(e, sponsor.id);
                     }}
                     onClick={() => onSponsorClick(sponsor.id)}
-                    className={`p-3.5 rounded-xl block border shadow-sm border-t-4 cursor-pointer transition-all ${statusBorderColors[status]} ${isOwner ? 'bg-white hover:border-brand-orange hover:shadow-md' : 'bg-slate-50 border-slate-200 opacity-80'}`}
+                    className={`p-3.5 rounded-xl block border shadow-sm border-t-4 cursor-pointer transition-all ${statusBorderColors[status]} ${getClassificationStyles(sponsor.classification).border} ${isOwner ? 'bg-white hover:border-brand-orange hover:shadow-md' : 'bg-slate-50 border-slate-200 opacity-80'}`}
                   >
+                    <div className="mb-2">
+                      <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${getClassificationStyles(sponsor.classification).badge}`}>
+                        {sponsor.classification || 'Unclassified'}
+                      </span>
+                    </div>
                     <h3 className="font-bold text-sm mb-1.5 text-slate-800 leading-tight">{sponsor.organization}</h3>
                     <p className="text-xs text-slate-500 mb-3 truncate">{sponsor.contactName || 'No contact specified'}</p>
                     <div className="flex items-center justify-between mt-auto gap-2">
@@ -160,8 +178,13 @@ export const KanbanBoard: React.FC<{ sponsors: Sponsor[], archivedSponsors?: Spo
                   key={sponsor.id}
                   draggable={false}
                   onClick={() => onSponsorClick(sponsor.id)}
-                  className="p-3.5 rounded-xl block border shadow-sm border-t-4 border-t-slate-300 cursor-pointer transition-all bg-slate-100 hover:border-slate-400"
+                  className={`p-3.5 rounded-xl block border shadow-sm border-t-4 border-t-slate-300 cursor-pointer transition-all bg-slate-100 hover:border-slate-400 ${getClassificationStyles(sponsor.classification).border}`}
                 >
+                  <div className="mb-2">
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${getClassificationStyles(sponsor.classification).badge}`}>
+                      {sponsor.classification || 'Unclassified'}
+                    </span>
+                  </div>
                   <h3 className="font-bold text-sm mb-1.5 text-slate-800 leading-tight">{sponsor.organization}</h3>
                   <p className="text-xs text-slate-500 mb-3 truncate">{sponsor.contactName || 'No contact specified'}</p>
                   <div className="flex items-center justify-between mt-auto gap-2">

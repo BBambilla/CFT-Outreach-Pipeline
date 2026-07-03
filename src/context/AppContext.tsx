@@ -96,7 +96,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           nextFollowupDate: s.next_followup_date,
           archived: s.archived,
           archivedFromStatus: s.archived_from_status,
-          createdAt: s.created_at
+          createdAt: s.created_at,
+          country: s.country,
+          submissionDate: s.submission_date,
+          enrolmentDate: s.enrolment_date,
+          trainingCompleted: s.training_completed,
+          certificateDate: s.certificate_date
         })));
       }
 
@@ -296,6 +301,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     if (data.lastContactedAt !== undefined) mapped.last_contacted_at = data.lastContactedAt;
     if (data.nextFollowupDate !== undefined) mapped.next_followup_date = data.nextFollowupDate;
     if (data.archivedFromStatus !== undefined) mapped.archived_from_status = data.archivedFromStatus;
+    if (data.submissionDate !== undefined) mapped.submission_date = data.submissionDate;
+    if (data.enrolmentDate !== undefined) mapped.enrolment_date = data.enrolmentDate;
+    if (data.trainingCompleted !== undefined) mapped.training_completed = data.trainingCompleted;
+    if (data.certificateDate !== undefined) mapped.certificate_date = data.certificateDate;
     
     const cleanMapped = { ...mapped };
     delete cleanMapped.assignedStudentId;
@@ -305,6 +314,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     delete cleanMapped.lastContactedAt;
     delete cleanMapped.nextFollowupDate;
     delete cleanMapped.archivedFromStatus;
+    delete cleanMapped.submissionDate;
+    delete cleanMapped.enrolmentDate;
+    delete cleanMapped.trainingCompleted;
+    delete cleanMapped.certificateDate;
     delete cleanMapped.createdAt;
     
     const { error } = await supabase.from('sponsors').update(cleanMapped).eq('id', id);
@@ -336,7 +349,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       last_contacted_at: sponsor.lastContactedAt,
       next_followup_date: sponsor.nextFollowupDate,
       created_at: sponsor.createdAt,
-      archived: sponsor.archived || false
+      archived: sponsor.archived || false,
+      country: sponsor.country,
+      submission_date: sponsor.submissionDate,
+      enrolment_date: sponsor.enrolmentDate,
+      training_completed: sponsor.trainingCompleted,
+      certificate_date: sponsor.certificateDate
     }]);
     if (error) {
       console.error(error);
@@ -366,7 +384,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       last_contacted_at: s.lastContactedAt,
       next_followup_date: s.nextFollowupDate,
       created_at: s.createdAt,
-      archived: s.archived || false
+      archived: s.archived || false,
+      country: s.country,
+      submission_date: s.submissionDate,
+      enrolment_date: s.enrolmentDate,
+      training_completed: s.trainingCompleted,
+      certificate_date: s.certificateDate
     }));
     await supabase.from('sponsors').insert(insertData);
   };

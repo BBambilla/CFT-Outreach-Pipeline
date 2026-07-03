@@ -67,6 +67,24 @@ export const SponsorDetailModal: React.FC<{ sponsorId: string, onClose: () => vo
     let text = template.body;
     let subjectText = template.subject || '';
 
+    if (template.title === 'Sponsorship Outreach') {
+      const c = owner?.country?.trim() || currentUser?.country?.trim();
+      subjectText = `Supporting National Tourism Climate Resilience in ${c ? c : 'your country'}`;
+      text = `Dear [First name],
+
+I would like to discuss how SUNx can support your work on Sustainable Tourism through our Climate Friendly Travel (CFT) framework.
+
+I attach details of a high-impact initiative focused on CFT and Sustainable Tourism education, as I hope it will be of interest. We are looking for local sponsors to:
+
+- Support our kids' education programme, Dodo4Kids, by creating sponsored books that highlight local destinations.
+- Build Climate Friendly Travel Chapters which support aspiring Climate Champions through access to training.
+- Create CFT Action Plans for Tourism businesses.
+
+If this is of interest, please let me know, or you can book a 30-minute call here: https://calendly.com/olly-climatefriendlytravelservices/30min
+
+Best wishes,`;
+    }
+
     if (sponsor.lastContactedAt) {
       const dateStr = new Date(sponsor.lastContactedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
       text = text.replace(/\(sent on \[Last contacted date\]\)/gi, `(sent on ${dateStr})`);
@@ -99,7 +117,7 @@ export const SponsorDetailModal: React.FC<{ sponsorId: string, onClose: () => vo
     }
 
     const company = sponsor.organization?.trim();
-    if (company) {
+    if (company && template.title !== 'Sponsorship Outreach') {
       const cleanSubject = subjectText.trim();
       if (cleanSubject.toLowerCase() === 'an invitation to join the climate friendly travel registry') {
         subjectText = `An invitation for ${company} to join the Climate Friendly Travel Registry`;
@@ -115,7 +133,7 @@ export const SponsorDetailModal: React.FC<{ sponsorId: string, onClose: () => vo
       }
     }
 
-    const match = text.match(/\n+(Best(?: regards)?|Warm regards|Sincerely),[\s\S]*$/i);
+    const match = text.match(/\n+(Best(?: regards)?|Warm regards|Sincerely|Best wishes),[\s\S]*$/i);
     if (match) {
       text = text.replace(match[0], `\n\n${match[1]},`);
     }
@@ -321,6 +339,65 @@ export const SponsorDetailModal: React.FC<{ sponsorId: string, onClose: () => vo
               {activeTab === 'Overview' && (
                 <div className="space-y-6">
                   <div className="grid grid-cols-2 gap-x-8 gap-y-6">
+                    {sponsor.classification === 'CFT Training' && (
+                      <>
+                        <div>
+                          <label className="block text-xs font-medium text-gray-500 mb-1.5 uppercase tracking-wider">Chapter Leader Name</label>
+                          <input 
+                            type="text" 
+                            value={owner?.name || ''} 
+                            readOnly
+                            className="w-full text-sm font-medium text-gray-500 border-none p-0 focus:ring-0 opacity-70 cursor-not-allowed" 
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-gray-500 mb-1.5 uppercase tracking-wider">Submission Date</label>
+                          <input 
+                            type="date" 
+                            value={sponsor.submissionDate || ''} 
+                            readOnly={!isOwner}
+                            onChange={(e) => updateSponsor(sponsorId, { submissionDate: e.target.value })}
+                            className={`w-full text-sm text-gray-900 border-none p-0 focus:ring-0 ${!isOwner ? 'opacity-70 text-gray-500' : ''}`} 
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-gray-500 mb-1.5 uppercase tracking-wider">Enrolment Date</label>
+                          <input 
+                            type="date" 
+                            value={sponsor.enrolmentDate || ''} 
+                            readOnly={!isOwner}
+                            onChange={(e) => updateSponsor(sponsorId, { enrolmentDate: e.target.value })}
+                            className={`w-full text-sm text-gray-900 border-none p-0 focus:ring-0 ${!isOwner ? 'opacity-70 text-gray-500' : ''}`} 
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-gray-500 mb-1.5 uppercase tracking-wider">Training Completed</label>
+                          <div className="flex items-center h-[38px]">
+                            <label className="relative inline-flex items-center cursor-pointer">
+                              <input 
+                                type="checkbox" 
+                                className="sr-only peer"
+                                checked={sponsor.trainingCompleted || false}
+                                disabled={!isOwner}
+                                onChange={(e) => updateSponsor(sponsorId, { trainingCompleted: e.target.checked })}
+                              />
+                              <div className={`w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-orange ${!isOwner ? 'opacity-70' : ''}`}></div>
+                              <span className="ml-3 text-sm font-medium text-gray-900">{sponsor.trainingCompleted ? 'Yes' : 'No'}</span>
+                            </label>
+                          </div>
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-gray-500 mb-1.5 uppercase tracking-wider">Certificate of Participation (Date)</label>
+                          <input 
+                            type="date" 
+                            value={sponsor.certificateDate || ''} 
+                            readOnly={!isOwner}
+                            onChange={(e) => updateSponsor(sponsorId, { certificateDate: e.target.value })}
+                            className={`w-full text-sm text-gray-900 border-none p-0 focus:ring-0 ${!isOwner ? 'opacity-70 text-gray-500' : ''}`} 
+                          />
+                        </div>
+                      </>
+                    )}
                     <div>
                       <label className="block text-xs font-medium text-gray-500 mb-1.5 uppercase tracking-wider">Organization</label>
                       <input 
@@ -510,8 +587,19 @@ export const SponsorDetailModal: React.FC<{ sponsorId: string, onClose: () => vo
                                   setIsSendingEmail(true);
                                   setEmailError('');
                                   try {
+                                    let htmlContent = draftEmail
+                                      .replace(/</g, '&lt;')
+                                      .replace(/>/g, '&gt;')
+                                      .replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" style="color:#1155cc;">$1</a>')
+                                      .replace(/\n/g, '<br>');
+                                    
+                                    htmlContent = htmlContent.replace(/(?:<br>- (.*?))+(?=<br>|$)/g, (match) => {
+                                      const items = match.split('<br>- ').filter(Boolean).map(item => `<li>${item}</li>`).join('');
+                                      return `<br><ul style="margin-top:8px;margin-bottom:8px;padding-left:24px;list-style-type:disc;">${items}</ul>`;
+                                    });
+
                                     const sig = getSignature();
-                                    const formattedHtml = `<div style="font-family:Arial,sans-serif;font-size:11pt;line-height:1.4;color:#222;">${draftEmail.replace(/\n/g, '<br>')}</div>${sig.html}`;
+                                    const formattedHtml = `<div style="font-family:Arial,sans-serif;font-size:11pt;line-height:1.4;color:#222;">${htmlContent}</div>${sig.html}`;
                                     const plainText = `${draftEmail}\n\n${sig.plain}`;
 
                                     const response = await fetch('/api/send-email', {
