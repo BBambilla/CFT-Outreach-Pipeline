@@ -98,6 +98,23 @@ export const SponsorDetailModal: React.FC<{ sponsorId: string, onClose: () => vo
       subjectText = subjectText.replace(regex, value);
     }
 
+    const company = sponsor.organization?.trim();
+    if (company) {
+      const cleanSubject = subjectText.trim();
+      if (cleanSubject.toLowerCase() === 'an invitation to join the climate friendly travel registry') {
+        subjectText = `An invitation for ${company} to join the Climate Friendly Travel Registry`;
+      } else {
+        const followUpRegex = /^following up/i;
+        if (followUpRegex.test(cleanSubject)) {
+          subjectText = cleanSubject.replace(/^following up( on| regarding)?/i, (match, p1) => {
+            return `Following up with ${company}${p1 || ''}`;
+          });
+        } else {
+          subjectText = `${company} — ${cleanSubject}`;
+        }
+      }
+    }
+
     const match = text.match(/\n+(Best(?: regards)?|Warm regards|Sincerely),[\s\S]*$/i);
     if (match) {
       text = text.replace(match[0], `\n\n${match[1]},`);
@@ -112,7 +129,7 @@ export const SponsorDetailModal: React.FC<{ sponsorId: string, onClose: () => vo
         filename: "Supporting National Climate Resilience.pdf",
         url: "https://jpftaqubuokdthecsmmx.supabase.co/storage/v1/object/public/attachments/Supporting_National_Climate_Resilience.pdf"
       }]);
-    } else if (template.title === 'Registry Outreach' && currentUser?.name) {
+    } else if ((template.title === 'Registry Outreach' || template.title === 'An invitation to join the Climate Friendly Travel Registry' || template.subject === 'An invitation to join the Climate Friendly Travel Registry') && currentUser?.name) {
       setDraftAttachments([{
         filename: `${currentUser.name.trim()} - CFT Registry.pdf`,
         url: `https://jpftaqubuokdthecsmmx.supabase.co/storage/v1/object/public/attachments/registry/${encodeURIComponent(currentUser.name.trim())}.pdf`
