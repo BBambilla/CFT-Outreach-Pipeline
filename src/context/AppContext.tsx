@@ -298,13 +298,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     if (data.contactName !== undefined) mapped.contact_name = data.contactName;
     if (data.sourceNotes !== undefined) mapped.source_notes = data.sourceNotes;
     if (data.researchNotes !== undefined) mapped.research_notes = data.researchNotes;
-    if (data.lastContactedAt !== undefined) mapped.last_contacted_at = data.lastContactedAt;
-    if (data.nextFollowupDate !== undefined) mapped.next_followup_date = data.nextFollowupDate;
+    if (data.lastContactedAt !== undefined) mapped.last_contacted_at = data.lastContactedAt || null;
+    if (data.nextFollowupDate !== undefined) mapped.next_followup_date = data.nextFollowupDate || null;
     if (data.archivedFromStatus !== undefined) mapped.archived_from_status = data.archivedFromStatus;
-    if (data.submissionDate !== undefined) mapped.submission_date = data.submissionDate;
-    if (data.enrolmentDate !== undefined) mapped.enrolment_date = data.enrolmentDate;
+    if (data.submissionDate !== undefined) mapped.submission_date = data.submissionDate || null;
+    if (data.enrolmentDate !== undefined) mapped.enrolment_date = data.enrolmentDate || null;
     if (data.trainingCompleted !== undefined) mapped.training_completed = data.trainingCompleted;
-    if (data.certificateDate !== undefined) mapped.certificate_date = data.certificateDate;
+    if (data.certificateDate !== undefined) mapped.certificate_date = data.certificateDate || null;
     
     const cleanMapped = { ...mapped };
     delete cleanMapped.assignedStudentId;
@@ -346,15 +346,15 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       research_notes: sponsor.researchNotes,
       status: sponsor.status,
       priority: sponsor.priority,
-      last_contacted_at: sponsor.lastContactedAt,
-      next_followup_date: sponsor.nextFollowupDate,
-      created_at: sponsor.createdAt,
+      last_contacted_at: sponsor.lastContactedAt || null,
+      next_followup_date: sponsor.nextFollowupDate || null,
+      created_at: sponsor.createdAt || null,
       archived: sponsor.archived || false,
       country: sponsor.country,
-      submission_date: sponsor.submissionDate,
-      enrolment_date: sponsor.enrolmentDate,
+      submission_date: sponsor.submissionDate || null,
+      enrolment_date: sponsor.enrolmentDate || null,
       training_completed: sponsor.trainingCompleted,
-      certificate_date: sponsor.certificateDate
+      certificate_date: sponsor.certificateDate || null
     }]);
     if (error) {
       console.error(error);
@@ -381,15 +381,15 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       research_notes: s.researchNotes,
       status: s.status,
       priority: s.priority,
-      last_contacted_at: s.lastContactedAt,
-      next_followup_date: s.nextFollowupDate,
-      created_at: s.createdAt,
+      last_contacted_at: s.lastContactedAt || null,
+      next_followup_date: s.nextFollowupDate || null,
+      created_at: s.createdAt || null,
       archived: s.archived || false,
       country: s.country,
-      submission_date: s.submissionDate,
-      enrolment_date: s.enrolmentDate,
+      submission_date: s.submissionDate || null,
+      enrolment_date: s.enrolmentDate || null,
       training_completed: s.trainingCompleted,
-      certificate_date: s.certificateDate
+      certificate_date: s.certificateDate || null
     }));
     await supabase.from('sponsors').insert(insertData);
   };
@@ -414,7 +414,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       id: newId,
       sponsor_id: interaction.sponsorId,
       type: interaction.type,
-      date: interaction.date,
+      date: interaction.date || null,
       summary: interaction.summary,
       attachment: interaction.attachment,
       outcome: interaction.outcome
