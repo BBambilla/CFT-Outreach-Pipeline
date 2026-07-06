@@ -3,7 +3,7 @@ import { simpleParser } from 'mailparser';
 import { createClient } from '@supabase/supabase-js';
 
 export const config = { maxDuration: 60 };
-const MAX_PER_RUN = 20;
+const MAX_PER_RUN = 10;
 
 export default async function handler(req: any, res: any) {
   const provided =
