@@ -38,6 +38,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [profileStatus, setProfileStatus] = useState<ProfileStatus>('loading');
   const [authSession, setAuthSession] = useState<any>(null);
   const loadAttemptRef = React.useRef(false);
+  const loadedUserIdRef = React.useRef<string | null>(null);
   
   const [role, setRole] = useState<'student' | 'coordinator'>('student');
   const [currentView, setCurrentView] = useState<ViewType>('pipeline');
@@ -285,7 +286,10 @@ Best wishes,`;
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
         setAuthSession(session.user);
-        performLoad(session.user);
+        if (loadedUserIdRef.current !== session.user.id) {
+          loadedUserIdRef.current = session.user.id;
+          performLoad(session.user);
+        }
       } else {
         setProfileStatus('idle');
       }
@@ -295,9 +299,13 @@ Best wishes,`;
       if (event === 'SIGNED_IN') {
         if (session?.user) {
           setAuthSession(session.user);
-          performLoad(session.user);
+          if (loadedUserIdRef.current !== session.user.id) {
+            loadedUserIdRef.current = session.user.id;
+            performLoad(session.user);
+          }
         }
       } else if (event === 'SIGNED_OUT') {
+        loadedUserIdRef.current = null;
         setAuthSession(null);
         setIsAuthenticated(false);
         setProfileStatus('idle');
