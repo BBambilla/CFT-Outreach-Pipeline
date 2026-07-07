@@ -22,6 +22,7 @@ interface AppContextType {
   resources: Resource[];
   knowledgeBaseFiles: KnowledgeBaseFile[];
   addKnowledgeBaseFile: (file: KnowledgeBaseFile) => void;
+  removeKnowledgeBaseFile: (id: string) => void;
   updateSponsor: (id: string, data: Partial<Sponsor>) => void;
   deleteSponsor: (id: string) => void;
   addSponsor: (sponsor: Sponsor) => void;
@@ -36,6 +37,13 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [profileStatus, setProfileStatus] = useState<ProfileStatus>('loading');
+  
+  // Custom setter for trace
+  const setProfileStatusTrace = (status: ProfileStatus) => {
+    console.log(`[AppContext] setProfileStatus -> ${status}`, new Date().toISOString());
+    setProfileStatus(status);
+  };
+
   const [authSession, setAuthSession] = useState<any>(null);
   const loadAttemptRef = React.useRef(false);
   const loadedUserIdRef = React.useRef<string | null>(null);
@@ -66,6 +74,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   }, []);
 
   const loadData = useCallback(async (linkedStudentId: string) => {
+    console.log(`[AppContext] loadData started`, new Date().toISOString());
     if (!supabase) return;
     try {
       const [sponsorsRes, interRes, tempsRes, resRes, kbRes] = await Promise.all([
@@ -216,16 +225,17 @@ Best wishes,`;
   }, []);
 
   const performLoad = async (user: any) => {
+    console.log(`[AppContext] performLoad started for user`, user?.id, new Date().toISOString());
     if (!supabase) return;
     if (profileStatus === 'found' || loadAttemptRef.current) return;
     
     loadAttemptRef.current = true;
-    setProfileStatus('loading');
+    setProfileStatusTrace('loading');
     
     let isTimeout = false;
     const timeoutId = setTimeout(() => {
       isTimeout = true;
-      setProfileStatus('error');
+      setProfileStatusTrace('error');
       loadAttemptRef.current = false;
     }, 12000);
 
@@ -240,7 +250,7 @@ Best wishes,`;
       clearTimeout(timeoutId);
 
       if (error) {
-        setProfileStatus('error');
+        setProfileStatusTrace('error');
         loadAttemptRef.current = false;
         return;
       }
@@ -257,16 +267,16 @@ Best wishes,`;
           await loadData(profile.student_id);
           if (!isTimeout) {
             setIsAuthenticated(true);
-            setProfileStatus('found');
+            setProfileStatusTrace('found');
           }
         }
       } else {
-        setProfileStatus('not-setup');
+        setProfileStatusTrace('not-setup');
       }
     } catch (err) {
       if (isTimeout) return;
       clearTimeout(timeoutId);
-      setProfileStatus('error');
+      setProfileStatusTrace('error');
     } finally {
       if (!isTimeout) {
         loadAttemptRef.current = false;
@@ -291,11 +301,12 @@ Best wishes,`;
           performLoad(session.user);
         }
       } else {
-        setProfileStatus('idle');
+        setProfileStatusTrace('idle');
       }
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log(`[AppContext] onAuthStateChange event -> ${event}`, new Date().toISOString());
       if (event === 'SIGNED_IN') {
         if (session?.user) {
           setAuthSession(session.user);
@@ -308,7 +319,7 @@ Best wishes,`;
         loadedUserIdRef.current = null;
         setAuthSession(null);
         setIsAuthenticated(false);
-        setProfileStatus('idle');
+        setProfileStatusTrace('idle');
         setCurrentUser(null);
         setSponsors([]);
         setInteractions([]);
@@ -513,13 +524,17 @@ Best wishes,`;
     }]);
   };
 
+  const removeKnowledgeBaseFile = (id: string) => {
+    setKnowledgeBaseFiles(prev => prev.filter(f => f.id !== id));
+  };
+
   return (
     <AppContext.Provider value={{
       isAuthenticated, setIsAuthenticated, profileStatus, retryLoadProfile,
       role, setRole,
       currentView, setCurrentView,
       currentUser, setCurrentUser,
-      students, sponsors, interactions, templates, resources, knowledgeBaseFiles, addKnowledgeBaseFile,
+      students, sponsors, interactions, templates, resources, knowledgeBaseFiles, addKnowledgeBaseFile, removeKnowledgeBaseFile,
       updateSponsor, deleteSponsor, addSponsor, addBulkSponsors, addInteraction, signOut,
       authEmail: authSession?.email || null
     }}>

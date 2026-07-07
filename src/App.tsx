@@ -65,7 +65,7 @@ const AppContent: React.FC = () => {
   );
 };
 
-export default function App() {
+export default function App() { console.log("[App.tsx] rendering", new Date().toISOString());
   const [dbStatus, setDbStatus] = useState<'checking' | 'configured' | 'unconfigured'>('checking');
   
   useEffect(() => {

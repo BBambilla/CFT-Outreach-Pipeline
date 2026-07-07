@@ -1,3 +1,4 @@
+console.log("[main.tsx] executing", new Date().toISOString());
 import {StrictMode} from 'react';
 import {createRoot} from 'react-dom/client';
 import App from './App.tsx';

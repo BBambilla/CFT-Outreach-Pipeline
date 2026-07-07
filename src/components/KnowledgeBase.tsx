@@ -2,13 +2,32 @@ import React, { useState, useRef } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { FileText, Download } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
+import { supabase } from '../lib/supabase';
 
 export const KnowledgeBase: React.FC = () => {
-  const { knowledgeBaseFiles, addKnowledgeBaseFile, role } = useAppContext();
+  const { knowledgeBaseFiles, addKnowledgeBaseFile, removeKnowledgeBaseFile, role } = useAppContext();
   
   const [isUploading, setIsUploading] = useState(false);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleDeleteFile = (file: { id: string }, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!window.confirm("Delete this file? This can't be undone.")) return;
+    
+    if (supabase) {
+      // Optimistic UI update
+      removeKnowledgeBaseFile(file.id);
+      
+      // Background DB update
+      supabase.from('knowledge_base_files').delete().eq('id', file.id).then(({ error }) => {
+        if (error) {
+          console.error('Failed to delete file', error);
+          alert('Delete failed on the server.');
+        }
+      });
+    }
+  };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -65,9 +84,19 @@ export const KnowledgeBase: React.FC = () => {
                         </p>
                       </div>
                     </div>
-                    <button className="p-2 text-slate-400 hover:text-brand-orange hover:bg-orange-50 rounded-lg transition-colors">
-                      <Download size={20} />
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button className="p-2 text-slate-400 hover:text-brand-orange hover:bg-orange-50 rounded-lg transition-colors">
+                        <Download size={20} />
+                      </button>
+                      {role === 'coordinator' && (
+                        <button 
+                          onClick={(e) => handleDeleteFile(file, e)}
+                          className="text-xs px-2.5 py-1 rounded-md border font-medium transition-colors bg-red-50 border-red-200 text-red-700 hover:bg-red-100"
+                        >
+                          Delete
+                        </button>
+                      )}
+                    </div>
                   </li>
                 ))}
               </ul>

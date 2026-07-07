@@ -41,7 +41,28 @@ export const CoordinatorDashboard: React.FC = () => {
     // Set up realtime subscription
     const subscription = supabase.channel('support_requests_changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'support_requests' }, payload => {
-        fetchSupportRequests();
+        // Just quietly add new requests without a full refetch
+        if (payload.eventType === 'INSERT') {
+          setSupportRequests(prev => {
+            const exists = prev.find(r => r.id === payload.new.id);
+            if (exists) return prev;
+            const newReqs = [...prev, payload.new as SupportRequest];
+            return newReqs.sort((a, b) => {
+              if (a.status === 'pending' && b.status !== 'pending') return -1;
+              if (a.status !== 'pending' && b.status === 'pending') return 1;
+              return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+            });
+          });
+        } else if (payload.eventType === 'UPDATE') {
+          // For updates, just apply them if the status differs from local (to avoid overwriting optimistic updates)
+          setSupportRequests(prev => {
+            const req = prev.find(r => r.id === payload.new.id);
+            if (!req || req.status === payload.new.status) return prev;
+            return prev.map(r => r.id === payload.new.id ? { ...r, ...payload.new } : r);
+          });
+        } else if (payload.eventType === 'DELETE') {
+          setSupportRequests(prev => prev.filter(r => r.id !== payload.old.id));
+        }
       })
       .subscribe();
 
@@ -50,13 +71,28 @@ export const CoordinatorDashboard: React.FC = () => {
     };
   }, []);
 
-  const toggleSupportRequestStatus = async (id: string, currentStatus: string) => {
+  const toggleSupportRequestStatus = (id: string, currentStatus: string) => {
     const newStatus = currentStatus === 'pending' ? 'actioned' : 'pending';
-    const { error } = await supabase.from('support_requests').update({ status: newStatus }).eq('id', id);
-    if (error) {
-      console.error('Failed to update status', error);
-      alert('Failed to update request status');
-    }
+    // Optimistic UI update
+    setSupportRequests(prev => prev.map(r => r.id === id ? { ...r, status: newStatus } : r));
+    
+    // Background DB update
+    supabase.from('support_requests').update({ status: newStatus }).eq('id', id).then(({ error }) => {
+      if (error) {
+        console.error('Failed to update status', error);
+        alert('Failed to update request status');
+        // Revert on error
+        setSupportRequests(prev => prev.map(r => r.id === id ? { ...r, status: currentStatus } : r));
+      }
+    });
+  };
+
+  const handleDeleteSupportRequest = (req: SupportRequest) => {
+    if (!window.confirm('Delete this support request? This cannot be undone.')) return;
+    setSupportRequests(prev => prev.filter(r => r.id !== req.id));   // remove from the UI immediately
+    supabase.from('support_requests').delete().eq('id', req.id).then(({ error }) => {
+      if (error) { console.error(error); alert('Delete failed on the server.'); }
+    });
   };
 
   const handleSupportRequestDrop = async (e: React.DragEvent, targetStatus: 'pending' | 'actioned') => {
@@ -575,12 +611,20 @@ export const CoordinatorDashboard: React.FC = () => {
                           <span className="text-xs text-slate-500 font-mono bg-white border border-slate-200 shadow-sm px-2 py-1 rounded-md">
                             {new Date(req.created_at).toLocaleDateString()} {new Date(req.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                           </span>
-                          <button 
-                            onClick={() => toggleSupportRequestStatus(req.id, req.status)}
-                            className="text-xs px-2.5 py-1 rounded-md border font-medium transition-colors bg-green-50 border-green-200 text-green-700 hover:bg-green-100"
-                          >
-                            Mark as actioned
-                          </button>
+                          <div className="flex items-center gap-2">
+                            <button 
+                              onClick={() => toggleSupportRequestStatus(req.id, req.status)}
+                              className="text-xs px-2.5 py-1 rounded-md border font-medium transition-colors bg-green-50 border-green-200 text-green-700 hover:bg-green-100"
+                            >
+                              Mark as actioned
+                            </button>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); handleDeleteSupportRequest(req); }}
+                              className="text-xs px-2.5 py-1 rounded-md border font-medium transition-colors bg-red-50 border-red-200 text-red-700 hover:bg-red-100"
+                            >
+                              Delete
+                            </button>
+                          </div>
                         </div>
                       </div>
                       <p className="text-sm text-slate-700 whitespace-pre-wrap mt-3 bg-white p-3 rounded-lg border border-slate-100 shadow-sm">{req.message}</p>
@@ -638,12 +682,20 @@ export const CoordinatorDashboard: React.FC = () => {
                           <span className="text-xs text-slate-500 font-mono bg-white border border-slate-200 shadow-sm px-2 py-1 rounded-md">
                             {new Date(req.created_at).toLocaleDateString()} {new Date(req.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                           </span>
-                          <button 
-                            onClick={() => toggleSupportRequestStatus(req.id, req.status)}
-                            className="text-xs px-2.5 py-1 rounded-md border font-medium transition-colors bg-white border-slate-300 text-slate-600 hover:bg-slate-50"
-                          >
-                            Mark as pending
-                          </button>
+                          <div className="flex items-center gap-2">
+                            <button 
+                              onClick={() => toggleSupportRequestStatus(req.id, req.status)}
+                              className="text-xs px-2.5 py-1 rounded-md border font-medium transition-colors bg-white border-slate-300 text-slate-600 hover:bg-slate-50"
+                            >
+                              Mark as pending
+                            </button>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); handleDeleteSupportRequest(req); }}
+                              className="text-xs px-2.5 py-1 rounded-md border font-medium transition-colors bg-red-50 border-red-200 text-red-700 hover:bg-red-100"
+                            >
+                              Delete
+                            </button>
+                          </div>
                         </div>
                       </div>
                       <p className="text-sm text-slate-700 whitespace-pre-wrap mt-3 bg-white p-3 rounded-lg border border-slate-100 shadow-sm">{req.message}</p>
