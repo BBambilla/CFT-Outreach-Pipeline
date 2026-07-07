@@ -7,8 +7,14 @@ import { SponsorDetailModal } from './SponsorDetailModal';
 import { supabase } from '../lib/supabase';
 
 export const Navigation: React.FC = () => {
-  const { role, setRole, currentUser, students, sponsors, setCurrentUser, currentView, setCurrentView, setIsAuthenticated, signOut } = useAppContext();
+  const { role, setRole, currentUser, students, sponsors, setCurrentUser, currentView, setCurrentView, setIsAuthenticated, signOut, authEmail } = useAppContext();
   const [isSupportModalOpen, setIsSupportModalOpen] = useState(false);
+
+  const getCoordinatorName = () => {
+    if (authEmail === 'pratishtha@cft-app.local') return 'Pratishtha Parajuli';
+    if (authEmail === 'olly@cft-app.local' || authEmail === 'chapters@thesunprogram.com') return 'Olly Wheatcroft';
+    return 'Olly Wheatcroft';
+  };
   const [isInboxOpen, setIsInboxOpen] = useState(false);
   const [selectedSponsorId, setSelectedSponsorId] = useState<string | null>(null);
   const [clearingIds, setClearingIds] = useState<Set<string>>(new Set());
@@ -167,10 +173,10 @@ export const Navigation: React.FC = () => {
 
             <div className="text-right hidden md:block">
               <div className="text-sm font-bold text-white tracking-tight drop-shadow-sm">
-                {role === 'student' ? currentUser?.name : (currentUser?.name || 'Coordinator')}
+                {role === 'student' ? currentUser?.name : getCoordinatorName()}
               </div>
               <div className="text-xs text-white/80 font-medium">
-                {role === 'student' ? currentUser?.country : (currentUser ? 'Admin' : 'Global Overview')}
+                {role === 'student' ? currentUser?.country : 'Admin'}
               </div>
             </div>
             
@@ -215,10 +221,10 @@ export const Navigation: React.FC = () => {
             )}
             <div className="mt-4 pt-4 border-t border-white/20 px-3">
               <div className="text-sm font-bold text-white">
-                {role === 'student' ? currentUser?.name : (currentUser?.name || 'Coordinator')}
+                {role === 'student' ? currentUser?.name : getCoordinatorName()}
               </div>
               <div className="text-xs text-white/80 font-medium">
-                {role === 'student' ? currentUser?.country : (currentUser ? 'Admin' : 'Global Overview')}
+                {role === 'student' ? currentUser?.country : 'Admin'}
               </div>
             </div>
           </div>

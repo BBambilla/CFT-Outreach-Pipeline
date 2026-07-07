@@ -28,6 +28,7 @@ interface AppContextType {
   addBulkSponsors: (newSponsors: Sponsor[]) => void;
   addInteraction: (interaction: Omit<Interaction, 'id'>) => void;
   signOut: () => Promise<void>;
+  authEmail: string | null;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -118,7 +119,72 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       }
 
       if (tempsRes.data) {
-        setTemplates(tempsRes.data.map((t: any) => ({ ...t })));
+        let loadedTemplates = tempsRes.data.map((t: any) => ({ ...t }));
+        
+        // Ensure the CFT Diploma Scholarship template exists
+        if (!loadedTemplates.some((t: any) => t.title === 'CFT Diploma Scholarship')) {
+          loadedTemplates.push({
+            id: 'cft-diploma-scholarship-template',
+            title: 'CFT Diploma Scholarship',
+            category: 'general',
+            subject: 'Climate Friendly Travel Diploma Scholarship for {country}',
+            body: `Dear [Name],
+
+I hope you are well. I am [Role] at SUNx Malta.
+
+We are giving a Climate Friendly Travel (CFT) Diploma scholarship for {country} starting in September and I'm hoping that you can recommend someone that would benefit.
+
+Interested candidates should apply via [CFT Diploma Scholarships 2026](https://www.thesunprogram.com/climate-friendly-travel-diploma-scholarships).
+
+Candidates must be able to commit to a minimum of 4-hours per week for the 8-month lecture course, and a second-year internship setting up a CFT Chapter (the internship is designed to fit with existing work commitments).
+
+We are already developing a Climate Friendly Travel community in {country} which is led by …………, who has already completed the Diploma. The aim is to support Tourism business through our CFT Registry, and to offer potential Climate Champions access to free training.
+
+Please let me know if you have any questions about the scholarship as we would welcome your help finding the right person.
+
+Best wishes,`,
+            active: true
+          });
+        }
+
+        setTemplates(loadedTemplates);
+        
+        // One-off migration for the Registry template
+        const registryTemplate = loadedTemplates.find((t: any) => t.body && t.body.includes("Listed on our public map and on the UN's Global Climate Action Portal."));
+        if (registryTemplate && registryTemplate.id !== 'cft-diploma-scholarship-template') {
+          const newBody = registryTemplate.body.replace(
+            "Listed on our public map and on the UN's Global Climate Action Portal.",
+            "Listed on our public map, the Travel & Tourism entry point to the UNFCCC Global Climate Action Portal"
+          );
+          supabase.from('templates').update({ body: newBody }).eq('id', registryTemplate.id).then();
+        }
+
+        // Update CFT Diploma Scholarship template if it's the old version
+        const scholarshipTemplate = loadedTemplates.find((t: any) => t.title === 'CFT Diploma Scholarship');
+        if (scholarshipTemplate) {
+          const newBody = `Dear [Name],
+
+I hope you are well. I am [Role] at SUNx Malta.
+
+We are giving a Climate Friendly Travel (CFT) Diploma scholarship for {country} starting in September and I'm hoping that you can recommend someone that would benefit.
+
+Interested candidates should apply via [CFT Diploma Scholarships 2026](https://www.thesunprogram.com/climate-friendly-travel-diploma-scholarships).
+
+Candidates must be able to commit to a minimum of 4-hours per week for the 8-month lecture course, and a second-year internship setting up a CFT Chapter (the internship is designed to fit with existing work commitments).
+
+We are already developing a Climate Friendly Travel community in {country} which is led by …………, who has already completed the Diploma. The aim is to support Tourism business through our CFT Registry, and to offer potential Climate Champions access to free training.
+
+Please let me know if you have any questions about the scholarship as we would welcome your help finding the right person.
+
+Best wishes,`;
+          const newSubject = 'Climate Friendly Travel Diploma Scholarship for {country}';
+          
+          if (scholarshipTemplate.body !== newBody || scholarshipTemplate.subject !== newSubject) {
+            supabase.from('templates').update({ body: newBody, subject: newSubject }).eq('id', scholarshipTemplate.id).then();
+            scholarshipTemplate.body = newBody;
+            scholarshipTemplate.subject = newSubject;
+          }
+        }
       }
       
       if (resRes.data) {
@@ -446,7 +512,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       currentView, setCurrentView,
       currentUser, setCurrentUser,
       students, sponsors, interactions, templates, resources, knowledgeBaseFiles, addKnowledgeBaseFile,
-      updateSponsor, deleteSponsor, addSponsor, addBulkSponsors, addInteraction, signOut
+      updateSponsor, deleteSponsor, addSponsor, addBulkSponsors, addInteraction, signOut,
+      authEmail: authSession?.email || null
     }}>
       {children}
     </AppContext.Provider>

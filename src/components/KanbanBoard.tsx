@@ -30,6 +30,8 @@ export const KanbanBoard: React.FC<{ sponsors: Sponsor[], archivedSponsors?: Spo
         return { badge: 'bg-green-100 text-green-800', border: 'border-l-[3px] border-l-green-500' };
       case 'Sponsorships':
         return { badge: 'bg-purple-100 text-purple-800', border: 'border-l-[3px] border-l-purple-500' };
+      case 'Scholarships':
+        return { badge: 'bg-amber-100 text-amber-800', border: 'border-l-[3px] border-l-amber-500' };
       default:
         return { badge: 'bg-slate-100 text-slate-800', border: 'border-l-[3px] border-l-slate-300' };
     }

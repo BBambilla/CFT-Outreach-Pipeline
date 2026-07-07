@@ -5,7 +5,7 @@ import { supabase } from '../lib/supabase';
 import { X, Search, Sparkles, Send, FileText, ChevronRight, PenSquare, ArrowRight, Trash2, AlertCircle, CheckCircle2, Paperclip } from 'lucide-react';
 
 export const SponsorDetailModal: React.FC<{ sponsorId: string, onClose: () => void }> = ({ sponsorId, onClose }) => {
-  const { sponsors, updateSponsor, deleteSponsor, addInteraction, interactions, templates, resources, currentUser, students, role } = useAppContext();
+  const { sponsors, updateSponsor, deleteSponsor, addInteraction, interactions, templates, resources, currentUser, students, role, authEmail } = useAppContext();
   const sponsor = sponsors.find(s => s.id === sponsorId);
   const sponsorInteractions = interactions.filter(i => i.sponsorId === sponsorId).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   
@@ -67,6 +67,14 @@ export const SponsorDetailModal: React.FC<{ sponsorId: string, onClose: () => vo
     let text = template.body;
     let subjectText = template.subject || '';
 
+    // Apply temporary patch for Registry template if not yet updated in DB
+    if (text.includes("Listed on our public map and on the UN's Global Climate Action Portal.")) {
+      text = text.replace(
+        "Listed on our public map and on the UN's Global Climate Action Portal.",
+        "Listed on our public map, the Travel & Tourism entry point to the UNFCCC Global Climate Action Portal"
+      );
+    }
+
     if (template.title === 'Sponsorship Outreach') {
       const c = owner?.country?.trim() || currentUser?.country?.trim();
       subjectText = `Supporting National Tourism Climate Resilience in ${c ? c : 'your country'}`;
@@ -103,11 +111,30 @@ Best wishes,`;
       firstName = `${sponsor.organization} team`;
     }
 
+    const getCoordinatorName = () => {
+      if (authEmail === 'pratishtha@cft-app.local') return 'Pratishtha Parajuli';
+      return 'Olly Wheatcroft';
+    };
+
+    const getCoordinatorRole = () => {
+      if (authEmail === 'pratishtha@cft-app.local') return 'Education Manager';
+      return 'Programme Manager';
+    };
+
+    const myName = role === 'coordinator' ? getCoordinatorName() : (currentUser?.name || '');
+    const myCountry = role === 'coordinator' ? 'Admin' : (currentUser?.country || '');
+    const myRole = role === 'coordinator' ? getCoordinatorRole() : 'Chapter Lead';
+
     const replacements: Record<string, string> = {
       '\\[First name\\]': firstName,
+      '\\[Name\\]': firstName,
       '\\[Organization\\]': sponsor.organization || '',
-      '\\[MyName\\]': currentUser?.name || '',
-      '\\[MyCountry\\]': currentUser?.country || ''
+      '\\[MyName\\]': myName,
+      '\\[MyCountry\\]': myCountry,
+      '\\[Role\\]': myRole,
+      '<Insert Country Name Here>': sponsor.country || '',
+      '<your country>': sponsor.country || '',
+      '\\{country\\}': sponsor.country || ''
     };
 
     for (const [key, value] of Object.entries(replacements)) {
@@ -117,7 +144,7 @@ Best wishes,`;
     }
 
     const company = sponsor.organization?.trim();
-    if (company && template.title !== 'Sponsorship Outreach') {
+    if (company && template.title !== 'Sponsorship Outreach' && template.title !== 'CFT Diploma Scholarship') {
       const cleanSubject = subjectText.trim();
       if (cleanSubject.toLowerCase() === 'an invitation to join the climate friendly travel registry') {
         subjectText = `An invitation for ${company} to join the Climate Friendly Travel Registry`;
@@ -147,10 +174,15 @@ Best wishes,`;
         filename: "Supporting National Climate Resilience.pdf",
         url: "https://jpftaqubuokdthecsmmx.supabase.co/storage/v1/object/public/attachments/Supporting_National_Climate_Resilience.pdf"
       }]);
-    } else if ((template.title === 'Registry Outreach' || template.title === 'An invitation to join the Climate Friendly Travel Registry' || template.subject === 'An invitation to join the Climate Friendly Travel Registry') && currentUser?.name) {
+    } else if (template.title === 'CFT Diploma Scholarship') {
       setDraftAttachments([{
-        filename: `${currentUser.name.trim()} - CFT Registry.pdf`,
-        url: `https://jpftaqubuokdthecsmmx.supabase.co/storage/v1/object/public/attachments/registry/${encodeURIComponent(currentUser.name.trim())}.pdf`
+        filename: "CFT Diploma Scholarships 2026.pdf",
+        url: "https://jpftaqubuokdthecsmmx.supabase.co/storage/v1/object/public/attachments/scholarship/CFT-Diploma-Scholarships-2026.pdf"
+      }]);
+    } else if ((template.title === 'Registry Outreach' || template.title === 'An invitation to join the Climate Friendly Travel Registry' || template.subject === 'An invitation to join the Climate Friendly Travel Registry') && myName) {
+      setDraftAttachments([{
+        filename: `${myName.trim()} - CFT Registry.pdf`,
+        url: `https://jpftaqubuokdthecsmmx.supabase.co/storage/v1/object/public/attachments/registry/${encodeURIComponent(myName.trim())}.pdf`
       }]);
     } else {
       setDraftAttachments([]);
@@ -171,6 +203,18 @@ Best wishes,`;
         plain: `${currentUser?.name || ''}\nSUNx ${currentUser?.country || ''}\n${currentUser?.country || ''} Chapter Lead\nhttps://www.thesunprogram.com\nShort Video About SUNx & Climate Friendly Travel: https://youtu.be/QW3byaVLrZM`
       };
     } else {
+      if (authEmail === 'pratishtha@cft-app.local') {
+        return {
+          html: `<div style="font-family:Arial,sans-serif;font-size:10.5pt;line-height:1.2;color:#808080;margin-top:16px;">
+  <div>Pratishtha Parajuli</div>
+  <div>Education Manager</div>
+  <div><strong>SUN<sup>x</sup> Malta</strong></div>
+  <div><a href="https://www.thesunprogram.com" style="color:#1155cc;">https://www.thesunprogram.com</a></div>
+</div>`,
+          plain: `Pratishtha Parajuli\nEducation Manager\nSUNx Malta\nhttps://www.thesunprogram.com`
+        };
+      }
+      // Default to Olly
       return {
         html: `<div style="font-family:Arial,sans-serif;font-size:10.5pt;line-height:1.2;color:#808080;margin-top:16px;">
   <div>Olly Wheatcroft</div>
@@ -339,7 +383,7 @@ Best wishes,`;
               {activeTab === 'Overview' && (
                 <div className="space-y-6">
                   <div className="grid grid-cols-2 gap-x-8 gap-y-6">
-                    {sponsor.classification === 'CFT Training' && (
+                    {(sponsor.classification === 'CFT Training' || sponsor.classification === 'Scholarships') && (
                       <>
                         <div>
                           <label className="block text-xs font-medium text-gray-500 mb-1.5 uppercase tracking-wider">Chapter Leader Name</label>
@@ -454,6 +498,9 @@ Best wishes,`;
                         <option value="Sponsorships" disabled={role !== 'coordinator'}>
                           Sponsorships {role !== 'coordinator' && '(admin only)'}
                         </option>
+                        {(authEmail === 'olly@cft-app.local' || authEmail === 'chapters@thesunprogram.com' || authEmail === 'pratishtha@cft-app.local' || authEmail === 'pratishtha@thesunprogram.com') && (
+                          <option value="Scholarships">Scholarships</option>
+                        )}
                       </select>
                     </div>
                     <div className="col-span-2">
@@ -504,7 +551,9 @@ Best wishes,`;
                                 onChange={(e) => setSelectedTemplateId(e.target.value)}
                               >
                                 <option value="">Choose a template...</option>
-                                {templates.map(t => <option key={t.id} value={t.id}>{t.title}</option>)}
+                                {templates
+                                  .filter(t => t.title === 'CFT Diploma Scholarship' ? (authEmail === 'olly@cft-app.local' || authEmail === 'chapters@thesunprogram.com' || authEmail === 'pratishtha@cft-app.local' || authEmail === 'pratishtha@thesunprogram.com') : true)
+                                  .map(t => <option key={t.id} value={t.id}>{t.title}</option>)}
                               </select>
                             </div>
                             <button 
@@ -590,7 +639,8 @@ Best wishes,`;
                                     let htmlContent = draftEmail
                                       .replace(/</g, '&lt;')
                                       .replace(/>/g, '&gt;')
-                                      .replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" style="color:#1155cc;">$1</a>')
+                                      .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" style="color:#1155cc;">$1</a>')
+                                      .replace(/(?<!["'])(https?:\/\/[^\s"']+)/g, '<a href="$1" style="color:#1155cc;">$1</a>')
                                       .replace(/\n/g, '<br>');
                                     
                                     htmlContent = htmlContent.replace(/(?:<br>- (.*?))+(?=<br>|$)/g, (match) => {
@@ -602,14 +652,27 @@ Best wishes,`;
                                     const formattedHtml = `<div style="font-family:Arial,sans-serif;font-size:11pt;line-height:1.4;color:#222;">${htmlContent}</div>${sig.html}`;
                                     const plainText = `${draftEmail}\n\n${sig.plain}`;
 
+                                    let finalFrom = currentUser?.email || 'noreply@climatefriendlytravel.com';
+                                    let finalFromName = currentUser?.name || 'Climate Friendly Travel';
+                                    
+                                    if (role === 'coordinator') {
+                                      if (authEmail === 'pratishtha@cft-app.local') {
+                                        finalFrom = 'pratishtha@thesunprogram.com';
+                                        finalFromName = 'Pratishtha Parajuli';
+                                      } else {
+                                        finalFrom = 'olly@thesunprogram.com';
+                                        finalFromName = 'Olly Wheatcroft';
+                                      }
+                                    }
+
                                     const response = await fetch('/api/send-email', {
                                       method: 'POST',
                                       headers: { 'Content-Type': 'application/json' },
                                       body: JSON.stringify({
-                                        from: currentUser?.email || 'noreply@climatefriendlytravel.com',
-                                        fromName: currentUser?.name || 'Climate Friendly Travel',
+                                        from: finalFrom,
+                                        fromName: finalFromName,
                                         to: sponsor.email || '',
-                                        subject: draftSubject,
+                                        subject: draftSubject.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '$1'),
                                         body: plainText,
                                         html: formattedHtml,
                                         attachments: draftAttachments.length > 0 ? draftAttachments : undefined

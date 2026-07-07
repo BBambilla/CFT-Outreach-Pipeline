@@ -14,7 +14,7 @@ async function startServer() {
 
   app.post('/api/send-email', async (req, res) => {
     try {
-      const { from, fromName, to, subject, body, attachments } = req.body;
+      const { from, fromName, to, subject, body, html, attachments } = req.body;
       const resend = new Resend(process.env.RESEND_API_KEY);
       
       const toArray = Array.isArray(to) ? to : to.split(',').map((e: string) => e.trim());
@@ -60,6 +60,10 @@ async function startServer() {
         subject: subject,
         text: body,
       };
+
+      if (html) {
+        emailOptions.html = html;
+      }
 
       if (resendAttachments.length > 0) {
         emailOptions.attachments = resendAttachments;

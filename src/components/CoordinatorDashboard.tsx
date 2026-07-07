@@ -3,7 +3,8 @@ import { useAppContext } from '../context/AppContext';
 import { PILELINE_STATUSES, Sponsor, SupportRequest } from '../types';
 import { supabase } from '../lib/supabase';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { AlertTriangle, Clock, Trophy, Users, Plus, KanbanSquare, LayoutDashboard, ShieldAlert, Upload, MessageCircle, List, Search, Filter, CalendarDays, Users2, Flag, ArrowUpDown, Map } from 'lucide-react';
+import { Mail, AlertTriangle, Clock, Trophy, Users, Plus, KanbanSquare, LayoutDashboard, ShieldAlert, Upload, MessageCircle, List, Search, Filter, CalendarDays, Users2, Flag, ArrowUpDown, Map } from 'lucide-react';
+import { BulkEmailTab } from './BulkEmailTab';
 import { AddLeadModal } from './AddLeadModal';
 import { KanbanBoard } from './KanbanBoard';
 import { SponsorDetailModal } from './SponsorDetailModal';
@@ -11,9 +12,9 @@ import Papa from 'papaparse';
 import { v4 as uuidv4 } from 'uuid';
 
 export const CoordinatorDashboard: React.FC = () => {
-  const { sponsors, students, addBulkSponsors } = useAppContext();
+  const { sponsors, students, addBulkSponsors, authEmail } = useAppContext();
   const [isAddingLead, setIsAddingLead] = useState(false);
-  const [view, setView] = useState<'overview' | 'leads' | 'pipeline' | 'reps' | 'followups' | 'admin'>('overview');
+  const [view, setView] = useState<'overview' | 'leads' | 'pipeline' | 'reps' | 'followups' | 'admin' | 'bulk-email'>('overview');
   const [selectedSponsorId, setSelectedSponsorId] = useState<string | null>(null);
   const [supportRequests, setSupportRequests] = useState<SupportRequest[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -173,11 +174,15 @@ export const CoordinatorDashboard: React.FC = () => {
   const adminArchivedSponsors = archivedSponsors.filter(s => s.assignedStudentId === 'student-admin');
 
   const activeRegistryTraining = useMemo(() => {
-    return activeSponsors.filter(s => s.classification === 'Registry' || s.classification === 'CFT Training');
+    return activeSponsors.filter(s => s.classification === 'Registry' || s.classification === 'CFT Training' || s.classification === 'Scholarships');
   }, [activeSponsors]);
 
   const archivedSponsorshipCount = useMemo(() => {
     return sponsors.filter(s => s.archived && s.classification === 'Sponsorships').length;
+  }, [sponsors]);
+
+  const archivedScholarshipsCount = useMemo(() => {
+    return sponsors.filter(s => s.archived && s.classification === 'Scholarships').length;
   }, [sponsors]);
 
   const getRepInfo = (studentId: string) => {
@@ -189,6 +194,7 @@ export const CoordinatorDashboard: React.FC = () => {
   const overviewStats = useMemo(() => {
     let registryCount = 0;
     let cftCount = 0;
+    let scholarshipsCount = 0;
     let committed = 0;
     let registered = 0;
     const stuckThreshold = new Date(Date.now() - 10 * 86400000);
@@ -199,6 +205,7 @@ export const CoordinatorDashboard: React.FC = () => {
     activeRegistryTraining.forEach(s => {
       if (s.classification === 'Registry') registryCount++;
       if (s.classification === 'CFT Training') cftCount++;
+      if (s.classification === 'Scholarships') scholarshipsCount++;
       if (s.status === 'Committed') {
         committed++;
         wins.push(s);
@@ -229,7 +236,7 @@ export const CoordinatorDashboard: React.FC = () => {
       return aTime - bTime; // oldest first
     });
 
-    return { total: activeRegistryTraining.length, registryCount, cftCount, committed, registered, stuckCount, stuckLeadsList, wins };
+    return { total: activeRegistryTraining.length, registryCount, cftCount, scholarshipsCount, committed, registered, stuckCount, stuckLeadsList, wins };
   }, [activeRegistryTraining]);
 
   const funnelData = useMemo(() => {
@@ -241,9 +248,10 @@ export const CoordinatorDashboard: React.FC = () => {
 
   const donutData = [
     { name: 'Registry', value: overviewStats.registryCount },
-    { name: 'CFT Training', value: overviewStats.cftCount }
+    { name: 'CFT Training', value: overviewStats.cftCount },
+    { name: 'Scholarships', value: overviewStats.scholarshipsCount }
   ];
-  const COLORS = ['#E4531F', '#0EA5E9'];
+  const COLORS = ['#E4531F', '#0EA5E9', '#f59e0b'];
 
   // Table filters
   const [filterType, setFilterType] = useState<string>('All');
@@ -468,6 +476,15 @@ export const CoordinatorDashboard: React.FC = () => {
               <ShieldAlert size={16} />
               Admin Leads
             </button>
+            {(authEmail === 'olly@cft-app.local' || authEmail === 'chapters@thesunprogram.com' || authEmail === 'pratishtha@cft-app.local') && (
+              <button
+                onClick={() => setView('bulk-email')}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${view === 'bulk-email' ? 'bg-white text-brand-orange shadow-sm border border-slate-200/50' : 'text-slate-600 hover:text-slate-900'}`}
+              >
+                <Mail size={16} />
+                Bulk Email
+              </button>
+            )}
           </div>
           <div className="flex flex-wrap gap-2">
             <button 
@@ -642,7 +659,7 @@ export const CoordinatorDashboard: React.FC = () => {
       {view === 'overview' ? (
         <div className="space-y-8 mt-4">
           {/* Summary Cards */}
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
             <div className="bg-white border text-center border-slate-200 p-4 rounded-xl shadow-sm">
               <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Total Active</p>
               <p className="text-3xl font-bold text-slate-900">{overviewStats.total}</p>
@@ -654,6 +671,10 @@ export const CoordinatorDashboard: React.FC = () => {
             <div className="bg-white border text-center border-slate-200 p-4 rounded-xl shadow-sm border-b-4 border-b-sky-500">
               <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">CFT Training</p>
               <p className="text-3xl font-bold text-sky-600">{overviewStats.cftCount}</p>
+            </div>
+            <div className="bg-white border text-center border-slate-200 p-4 rounded-xl shadow-sm border-b-4 border-b-amber-500">
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Scholarships</p>
+              <p className="text-3xl font-bold text-amber-600">{overviewStats.scholarshipsCount}</p>
             </div>
             <div className="bg-white border text-center border-slate-200 p-4 rounded-xl shadow-sm">
               <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Committed</p>
@@ -708,9 +729,10 @@ export const CoordinatorDashboard: React.FC = () => {
                   </PieChart>
                 </ResponsiveContainer>
               </div>
-              <div className="flex justify-center gap-6 mt-4">
+              <div className="flex justify-center gap-6 mt-4 flex-wrap">
                 <div className="flex items-center text-sm"><div className="w-3 h-3 rounded-full mr-2" style={{backgroundColor: COLORS[0]}}></div> Registry</div>
                 <div className="flex items-center text-sm"><div className="w-3 h-3 rounded-full mr-2" style={{backgroundColor: COLORS[1]}}></div> CFT Training</div>
+                <div className="flex items-center text-sm"><div className="w-3 h-3 rounded-full mr-2" style={{backgroundColor: COLORS[2]}}></div> Scholarships</div>
               </div>
             </div>
           </div>
@@ -790,6 +812,7 @@ export const CoordinatorDashboard: React.FC = () => {
                   <option value="All">All Types</option>
                   <option value="Registry">Registry</option>
                   <option value="CFT Training">CFT Training</option>
+                  <option value="Scholarships">Scholarships</option>
                 </select>
                 <select className="text-sm border border-slate-300 rounded-lg px-3 py-2 bg-white" value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}>
                   <option value="All">All Statuses</option>
@@ -848,6 +871,10 @@ export const CoordinatorDashboard: React.FC = () => {
                               <span className="text-brand-orange font-medium">{s.classification}</span>
                            ) : s.classification === 'CFT Training' ? (
                               <span className="text-sky-600 font-medium">{s.classification}</span>
+                           ) : s.classification === 'Scholarships' ? (
+                              <span className="text-amber-600 font-medium">{s.classification}</span>
+                           ) : s.classification === 'Sponsorships' ? (
+                              <span className="text-purple-600 font-medium">{s.classification}</span>
                            ) : '-'}
                         </td>
                         <td className="px-4 py-3 text-sm text-slate-700">{info.country}</td>
@@ -996,6 +1023,8 @@ export const CoordinatorDashboard: React.FC = () => {
         <div className="mt-8 flex-1 w-full bg-slate-50 border shadow-inner overflow-x-auto border-t border-slate-200 px-4 sm:px-6 lg:px-8 py-6 sm:py-8 -mx-4 sm:-mx-6 lg:-mx-8 min-h-[500px]">
           <KanbanBoard sponsors={activeSponsors} archivedSponsors={archivedSponsors} onSponsorClick={setSelectedSponsorId} />
         </div>
+      ) : view === 'bulk-email' ? (
+        <BulkEmailTab />
       ) : (
         <div className="mt-8 flex-1 w-full bg-slate-50 border shadow-inner overflow-x-auto border-t border-slate-200 px-4 sm:px-6 lg:px-8 py-6 sm:py-8 -mx-4 sm:-mx-6 lg:-mx-8 min-h-[500px]">
           <KanbanBoard sponsors={adminSponsors} archivedSponsors={adminArchivedSponsors} onSponsorClick={setSelectedSponsorId} />

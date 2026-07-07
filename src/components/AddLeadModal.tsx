@@ -9,24 +9,30 @@ interface AddLeadModalProps {
 }
 
 export const AddLeadModal: React.FC<AddLeadModalProps> = ({ onClose }) => {
-  const { addSponsor, addBulkSponsors, currentUser, role } = useAppContext();
+  const { addSponsor, addBulkSponsors, currentUser, role, authEmail } = useAppContext();
   
   const [organization, setOrganization] = useState('');
   const [website, setWebsite] = useState('');
   const [contactName, setContactName] = useState('');
   const [email, setEmail] = useState('');
-  const [classification, setClassification] = useState<'Registry' | 'CFT Training' | 'Sponsorships' | ''>('');
+  const [classification, setClassification] = useState<'Registry' | 'CFT Training' | 'Sponsorships' | 'Scholarships' | ''>('');
   const [notes, setNotes] = useState('');
   
   const [submissionDate, setSubmissionDate] = useState(new Date().toISOString().split('T')[0]);
   const [participants, setParticipants] = useState<{name: string, email: string}[]>([{name: '', email: ''}]);
+  const [scholarshipCountry, setScholarshipCountry] = useState('');
   
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (classification === 'CFT Training') {
+    if (classification === 'CFT Training' || classification === 'Scholarships') {
       if (participants.some(p => !p.name.trim() || !p.email.trim())) {
         alert("All participants must have a Name and Email.");
+        return;
+      }
+      
+      if (classification === 'Scholarships' && !scholarshipCountry.trim()) {
+        alert("Scholarships require a target Country.");
         return;
       }
       
@@ -42,12 +48,12 @@ export const AddLeadModal: React.FC<AddLeadModalProps> = ({ onClose }) => {
         rationale: '',
         sourceNotes: '',
         researchNotes: '',
-        classification: 'CFT Training' as any,
+        classification: classification as any,
         status: 'To Research' as SponsorStatus,
         priority: 'Medium' as any,
         createdAt: new Date().toISOString(),
         submissionDate: submissionDate,
-        country: currentUser?.country || '',
+        country: classification === 'Scholarships' ? scholarshipCountry.trim() : (currentUser?.country || ''),
       }));
       
       addBulkSponsors(newSponsors);
@@ -127,10 +133,13 @@ export const AddLeadModal: React.FC<AddLeadModalProps> = ({ onClose }) => {
                 <option value="Sponsorships" disabled={role !== 'coordinator'}>
                   Sponsorships {role !== 'coordinator' && '(admin only)'}
                 </option>
+                {(authEmail === 'olly@cft-app.local' || authEmail === 'chapters@thesunprogram.com' || authEmail === 'pratishtha@cft-app.local' || authEmail === 'pratishtha@thesunprogram.com') && (
+                  <option value="Scholarships">Scholarships</option>
+                )}
               </select>
             </div>
             
-            {classification === 'CFT Training' ? (
+            {classification === 'CFT Training' || classification === 'Scholarships' ? (
               <>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
@@ -152,6 +161,19 @@ export const AddLeadModal: React.FC<AddLeadModalProps> = ({ onClose }) => {
                       className="w-full border border-slate-200 rounded-lg p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-orange/50 focus:border-brand-orange"
                     />
                   </div>
+                  {classification === 'Scholarships' && (
+                    <div className="md:col-span-2">
+                      <label className="block text-sm font-semibold text-slate-700 mb-1">Country <span className="text-red-500">*</span></label>
+                      <input 
+                        type="text" 
+                        value={scholarshipCountry}
+                        onChange={(e) => setScholarshipCountry(e.target.value)}
+                        required={classification === 'Scholarships'}
+                        className="w-full border border-slate-200 rounded-lg p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-orange/50 focus:border-brand-orange"
+                        placeholder="Target country for the scholarship"
+                      />
+                    </div>
+                  )}
                 </div>
                 
                 <div className="mt-6">

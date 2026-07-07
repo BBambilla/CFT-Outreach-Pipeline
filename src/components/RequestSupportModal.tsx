@@ -8,7 +8,7 @@ interface RequestSupportModalProps {
 }
 
 export const RequestSupportModal: React.FC<RequestSupportModalProps> = ({ onClose }) => {
-  const { currentUser, role } = useAppContext();
+  const { currentUser, role, authEmail } = useAppContext();
   const [subject, setSubject] = useState('');
   const [message, setMessage] = useState('');
   const [category, setCategory] = useState<'Registry' | 'CFT Training' | ''>('');
@@ -16,13 +16,23 @@ export const RequestSupportModal: React.FC<RequestSupportModalProps> = ({ onClos
   const [isSent, setIsSent] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const getCoordinatorEmail = () => {
+    if (authEmail === 'pratishtha@cft-app.local') return 'pratishtha@thesunprogram.com';
+    return 'olly@thesunprogram.com';
+  };
+
+  const getCoordinatorName = () => {
+    if (authEmail === 'pratishtha@cft-app.local') return 'Pratishtha Parajuli';
+    return 'Olly Wheatcroft';
+  };
+
   const handleSend = async () => {
     setIsSending(true);
     setError(null);
     try {
-      const fromEmail = role === 'coordinator' ? 'olly@thesunprogram.com' : currentUser?.email;
-      const repName = currentUser?.name || 'Unknown';
-      const countryStr = currentUser?.country || 'Unknown';
+      const fromEmail = role === 'coordinator' ? getCoordinatorEmail() : currentUser?.email;
+      const repName = role === 'coordinator' ? getCoordinatorName() : (currentUser?.name || 'Unknown');
+      const countryStr = role === 'coordinator' ? 'Admin' : (currentUser?.country || 'Unknown');
       const toAddress = category === 'Registry' ? 'hans@thesunprogram.com' : 'pratishtha@thesunprogram.com';
       const subjectLine = `Support request (${category}) from ${countryStr}`;
       const bodyStr = `Name: ${repName}\nCountry: ${countryStr}\nSubject: ${subject}\n\n${message}`;
