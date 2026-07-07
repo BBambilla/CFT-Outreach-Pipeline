@@ -1,0 +1,70 @@
+--- src/components/BulkEmailTab.tsx
++++ src/components/BulkEmailTab.tsx
+@@ -1,4 +1,4 @@
+-import React, { useState, useRef } from 'react';
++import React, { useState, useRef, useEffect } from 'react';
+ import { useAppContext } from '../context/AppContext';
+ import { supabase } from '../lib/supabase';
+ import { Mail, CheckSquare, Square, Paperclip, X, AlertCircle, Play, Send } from 'lucide-react';
+@@ -21,6 +21,34 @@
+   const [sendProgress, setSendProgress] = useState({ current: 0, total: 0, successes: 0, failures: 0 });
+   const [sendComplete, setSendComplete] = useState(false);
+ 
++  useEffect(() => {
++    const loadRecipients = async () => {
++      if (!supabase) return;
++      const { data, error } = await supabase
++        .from('bulk_recipients')
++        .select('*')
++        .order('country');
++        
++      if (error) {
++        console.error('Error loading bulk recipients:', error);
++        return;
++      }
++      
++      if (data && data.length > 0) {
++        const mapped: Recipient[] = data.map((row: any) => ({
++          id: row.id,
++          name: row.name || '',
++          email: row.email,
++          country: row.country || '',
++          selected: false,
++          status: 'pending'
++        }));
++        setRecipients(mapped);
++      }
++    };
++    loadRecipients();
++  }, []);
++
+   // Admin identity logic
+   const getAdminIdentity = () => {
+     let finalFrom = 'chapters@thesunprogram.com';
+@@ -107,13 +135,16 @@
+       }
+       
+-      parsed.push({
+-        id: \`recip-\${index}-\${Date.now()}\`,
+-        name,
+-        email,
+-        country,
+-        selected: true,
+-        status: 'pending'
+-      });
++      if (!recipients.some(r => r.email.toLowerCase() === email.toLowerCase())) {
++        parsed.push({
++          id: \`recip-\${index}-\${Date.now()}\`,
++          name,
++          email,
++          country,
++          selected: true,
++          status: 'pending'
++        });
++      }
+     });
+     
+-    setRecipients(parsed);
++    setRecipients(prev => [...prev, ...parsed]);
+     setPasteData('');
+   };

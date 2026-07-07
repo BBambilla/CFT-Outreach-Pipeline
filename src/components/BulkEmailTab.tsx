@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { supabase } from '../lib/supabase';
 import { Mail, CheckSquare, Square, Paperclip, X, AlertCircle, Play, Send } from 'lucide-react';
@@ -25,6 +25,35 @@ export const BulkEmailTab: React.FC = () => {
   const [isSending, setIsSending] = useState(false);
   const [sendProgress, setSendProgress] = useState({ current: 0, total: 0, successes: 0, failures: 0 });
   const [sendComplete, setSendComplete] = useState(false);
+  const [isAddExtraOpen, setIsAddExtraOpen] = useState(false);
+
+  useEffect(() => {
+    const loadRecipients = async () => {
+      if (!supabase) return;
+      const { data, error } = await supabase
+        .from('bulk_recipients')
+        .select('*')
+        .order('country');
+        
+      if (error) {
+        console.error('Error loading bulk recipients:', error);
+        return;
+      }
+      
+      if (data && data.length > 0) {
+        const mapped: Recipient[] = data.map((row: any) => ({
+          id: row.id || row.email,
+          name: row.name || '',
+          email: row.email,
+          country: row.country || '',
+          selected: false,
+          status: 'pending'
+        }));
+        setRecipients(mapped);
+      }
+    };
+    loadRecipients();
+  }, []);
 
   // Admin identity logic
   const getAdminIdentity = () => {
@@ -105,17 +134,20 @@ export const BulkEmailTab: React.FC = () => {
         country = cols[emailColIdx - 2];
       }
       
-      parsed.push({
-        id: `recip-${index}-${Date.now()}`,
-        name,
-        email,
-        country,
-        selected: true,
-        status: 'pending'
-      });
+      // Only add if not already in the list
+      if (!recipients.some(r => r.email.toLowerCase() === email.toLowerCase()) && !parsed.some(p => p.email.toLowerCase() === email.toLowerCase())) {
+        parsed.push({
+          id: `recip-${index}-${Date.now()}`,
+          name,
+          email,
+          country,
+          selected: true,
+          status: 'pending'
+        });
+      }
     });
     
-    setRecipients(parsed);
+    setRecipients(prev => [...prev, ...parsed]);
   };
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -267,33 +299,11 @@ export const BulkEmailTab: React.FC = () => {
       
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 space-y-6">
         
-        {/* Recipients Parsing */}
-        {!isSending && !sendComplete && (
-          <div className="space-y-4 border-b border-slate-200 pb-6">
-            <h2 className="text-lg font-semibold text-slate-800">1. Paste Recipients</h2>
-            <p className="text-sm text-slate-500">
-              Paste rows from Excel or Sheets. Format should be <code className="bg-slate-100 px-1 py-0.5 rounded">Name, email@domain.com</code> or <code className="bg-slate-100 px-1 py-0.5 rounded">Country, Name, email@domain.com</code> (comma or tab separated).
-            </p>
-            <textarea
-              className="w-full h-32 border border-slate-200 rounded-lg p-3 text-sm focus:outline-none focus:border-brand-orange focus:ring-1 focus:ring-brand-orange"
-              placeholder="Malta, John Doe, john@example.com..."
-              value={pasteData}
-              onChange={(e) => setPasteData(e.target.value)}
-            />
-            <button 
-              onClick={handleParse}
-              className="bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-md font-medium text-sm transition-colors"
-            >
-              Parse Recipients
-            </button>
-          </div>
-        )}
-
         {/* Recipient Checklist */}
         {recipients.length > 0 && !isSending && !sendComplete && (
           <div className="space-y-4 border-b border-slate-200 pb-6">
             <div className="flex justify-between items-center">
-              <h2 className="text-lg font-semibold text-slate-800">2. Select Recipients</h2>
+              <h2 className="text-lg font-semibold text-slate-800">1. Select Recipients</h2>
               <span className="text-sm font-medium text-brand-orange bg-orange-50 px-3 py-1 rounded-full">
                 Sending to {selectedCount} of {recipients.length}
               </span>
@@ -324,8 +334,8 @@ export const BulkEmailTab: React.FC = () => {
 
         {/* Message Composition */}
         {!isSending && !sendComplete && (
-          <div className="space-y-4 pb-6">
-            <h2 className="text-lg font-semibold text-slate-800">3. Compose Message</h2>
+          <div className="space-y-4 pb-6 border-b border-slate-200">
+            <h2 className="text-lg font-semibold text-slate-800">2. Compose Message</h2>
             <p className="text-sm text-slate-500 mb-2">
               Use <code className="bg-slate-100 px-1 py-0.5 rounded">[Name]</code> and <code className="bg-slate-100 px-1 py-0.5 rounded">[Country]</code> to personalize.
             </p>
@@ -344,6 +354,11 @@ export const BulkEmailTab: React.FC = () => {
               value={body}
               onChange={(e) => setBody(e.target.value)}
             />
+            
+            <div className="bg-slate-50 border border-slate-200 rounded-lg p-4">
+              <p className="text-sm font-medium text-slate-700 mb-2">Signature (added automatically to every email):</p>
+              <div dangerouslySetInnerHTML={{ __html: getSignature().html }} />
+            </div>
             
             <div className="flex justify-between items-center">
               <div className="flex items-center gap-4">
@@ -383,10 +398,42 @@ export const BulkEmailTab: React.FC = () => {
           </div>
         )}
         
+        {/* Add Extra Recipients */}
+        {!isSending && !sendComplete && (
+          <div className="space-y-4 pt-4 border-b border-slate-200 pb-6">
+            <button 
+              onClick={() => setIsAddExtraOpen(!isAddExtraOpen)}
+              className="flex items-center text-sm font-medium text-brand-orange hover:text-orange-600 transition-colors"
+            >
+              {isAddExtraOpen ? '-' : '+'} Add extra recipients (Paste from Excel/CSV)
+            </button>
+            
+            {isAddExtraOpen && (
+              <div className="space-y-4 pt-2">
+                <p className="text-sm text-slate-500">
+                  Paste rows from Excel or Sheets. Format should be <code className="bg-slate-100 px-1 py-0.5 rounded">Name, email@domain.com</code> or <code className="bg-slate-100 px-1 py-0.5 rounded">Country, Name, email@domain.com</code> (comma or tab separated).
+                </p>
+                <textarea
+                  className="w-full h-32 border border-slate-200 rounded-lg p-3 text-sm focus:outline-none focus:border-brand-orange focus:ring-1 focus:ring-brand-orange"
+                  placeholder="Malta, John Doe, john@example.com..."
+                  value={pasteData}
+                  onChange={(e) => setPasteData(e.target.value)}
+                />
+                <button 
+                  onClick={handleParse}
+                  className="bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-md font-medium text-sm transition-colors"
+                >
+                  Parse Recipients
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+        
         {/* Preview */}
         {!isSending && !sendComplete && recipients.length > 0 && selectedCount > 0 && subject && body && (
           <div className="space-y-4 border-t border-slate-200 pt-6">
-            <h2 className="text-lg font-semibold text-slate-800">4. Preview (First Recipient)</h2>
+            <h2 className="text-lg font-semibold text-slate-800">3. Preview (First Recipient)</h2>
             <div className="bg-slate-50 border border-slate-200 rounded-lg p-6">
               <div className="mb-4 pb-4 border-b border-slate-200">
                 <p className="text-sm text-slate-600"><span className="font-semibold">To:</span> {recipients.find(r => r.selected)?.name} &lt;{recipients.find(r => r.selected)?.email}&gt;</p>
