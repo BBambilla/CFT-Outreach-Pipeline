@@ -51,12 +51,12 @@ export const BulkEmailTab: React.FC = () => {
   <div>${currentUser?.country || ''} Chapter Lead</div>
   <div><strong>SUN<sup>x</sup> Malta</strong></div>
   <div><a href="https://www.thesunprogram.com" style="color:#1155cc;">https://www.thesunprogram.com</a></div>
-  <div style="margin-top:10px;"><a href="https://youtu.be/QW3byaVLrZM" style="color:#1155cc;">Short Video About SUNx &amp; Climate Friendly Travel</a></div>
+  <div><a href="https://youtu.be/QW3byaVLrZM" style="color:#1155cc;">"Short Video About SUNx &amp; Climate Friendly Travel"</a></div>
 </div>`,
-        plain: `${currentUser?.name || ''}\nSUNx ${currentUser?.country || ''}\n${currentUser?.country || ''} Chapter Lead\nhttps://www.thesunprogram.com\nShort Video About SUNx & Climate Friendly Travel: https://youtu.be/QW3byaVLrZM`
+        plain: `${currentUser?.name || ''}\n${currentUser?.country || ''} Chapter Lead\nSUNx Malta\nhttps://www.thesunprogram.com\n"Short Video About SUNx & Climate Friendly Travel": https://youtu.be/QW3byaVLrZM`
       };
     } else {
-      if (authEmail === 'pratishtha@cft-app.local') {
+      if (authEmail === 'pratishtha@cft-app.local' || authEmail === 'pratishtha@thesunprogram.com') {
         return {
           html: `<div style="font-family:Arial,sans-serif;font-size:10.5pt;line-height:1.2;color:#808080;margin-top:16px;">
   <div>Pratishtha Parajuli</div>
@@ -74,9 +74,9 @@ export const BulkEmailTab: React.FC = () => {
   <div>Programme Manager</div>
   <div>m: +44 7765 132408</div>
   <div><a href="https://www.thesunprogram.com" style="color:#1155cc;">https://www.thesunprogram.com</a></div>
-  <div style="margin-top:10px;"><a href="https://youtu.be/QW3byaVLrZM" style="color:#1155cc;">Short Video About SUNx &amp; Climate Friendly Travel</a></div>
+  <div><a href="https://youtu.be/QW3byaVLrZM" style="color:#1155cc;">"Short Video About SUNx &amp; Climate Friendly Travel"</a></div>
 </div>`,
-        plain: `Olly Wheatcroft\nSUNx Malta\nProgramme Manager\nm: +44 7765 132408\nhttps://www.thesunprogram.com\nShort Video About SUNx & Climate Friendly Travel: https://youtu.be/QW3byaVLrZM`
+        plain: `Olly Wheatcroft\nSUNx Malta\nProgramme Manager\nm: +44 7765 132408\nhttps://www.thesunprogram.com\n"Short Video About SUNx & Climate Friendly Travel": https://youtu.be/QW3byaVLrZM`
       };
     }
   };

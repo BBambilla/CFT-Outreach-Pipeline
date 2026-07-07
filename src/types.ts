@@ -54,6 +54,7 @@ export interface Sponsor {
   submissionDate?: string;
   country?: string;
   enrolmentDate?: string;
+  chapter_leader_name?: string;
   trainingCompleted?: boolean;
   certificateDate?: string;
 }

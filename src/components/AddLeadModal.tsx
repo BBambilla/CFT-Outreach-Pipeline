@@ -22,6 +22,14 @@ export const AddLeadModal: React.FC<AddLeadModalProps> = ({ onClose }) => {
   const [participants, setParticipants] = useState<{name: string, email: string}[]>([{name: '', email: ''}]);
   const [scholarshipCountry, setScholarshipCountry] = useState('');
   
+  const getLoggedInName = () => {
+    if (role === 'coordinator') {
+      if (authEmail === 'pratishtha@cft-app.local' || authEmail === 'pratishtha@thesunprogram.com') return 'Pratishtha Parajuli';
+      return 'Olly Wheatcroft';
+    }
+    return currentUser?.name || '';
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -54,6 +62,7 @@ export const AddLeadModal: React.FC<AddLeadModalProps> = ({ onClose }) => {
         createdAt: new Date().toISOString(),
         submissionDate: submissionDate,
         country: classification === 'Scholarships' ? scholarshipCountry.trim() : (currentUser?.country || ''),
+        chapter_leader_name: getLoggedInName(),
       }));
       
       addBulkSponsors(newSponsors);
@@ -82,6 +91,7 @@ export const AddLeadModal: React.FC<AddLeadModalProps> = ({ onClose }) => {
       status: 'To Research', // Default status for new leads
       priority: 'Medium',
       createdAt: new Date().toISOString(),
+      chapter_leader_name: getLoggedInName(),
     };
     
     addSponsor(newSponsor);
@@ -146,7 +156,7 @@ export const AddLeadModal: React.FC<AddLeadModalProps> = ({ onClose }) => {
                     <label className="block text-sm font-semibold text-slate-700 mb-1">Chapter Leader Name</label>
                     <input 
                       type="text" 
-                      value={currentUser?.name || ''}
+                      value={getLoggedInName()}
                       readOnly
                       className="w-full border border-slate-200 rounded-lg p-2.5 text-sm bg-slate-50 text-slate-500 cursor-not-allowed"
                     />

@@ -389,7 +389,7 @@ Best wishes,`;
                           <label className="block text-xs font-medium text-gray-500 mb-1.5 uppercase tracking-wider">Chapter Leader Name</label>
                           <input 
                             type="text" 
-                            value={owner?.name || ''} 
+                            value={sponsor.chapter_leader_name || owner?.name || ''} 
                             readOnly
                             className="w-full text-sm font-medium text-gray-500 border-none p-0 focus:ring-0 opacity-70 cursor-not-allowed" 
                           />
