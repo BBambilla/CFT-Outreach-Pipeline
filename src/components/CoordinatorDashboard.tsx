@@ -627,6 +627,7 @@ export const CoordinatorDashboard: React.FC = () => {
                               View &amp; Reply
                             </button>
                             <button
+                              onClick={(e) => { e.stopPropagation(); handleDeleteSupportRequest(req); }}
                               className="text-xs px-2.5 py-1 rounded-md border font-medium transition-colors bg-red-50 border-red-200 text-red-700 hover:bg-red-100"
                             >
                               Delete
@@ -705,6 +706,7 @@ export const CoordinatorDashboard: React.FC = () => {
                               View &amp; Reply
                             </button>
                             <button
+                              onClick={(e) => { e.stopPropagation(); handleDeleteSupportRequest(req); }}
                               className="text-xs px-2.5 py-1 rounded-md border font-medium transition-colors bg-red-50 border-red-200 text-red-700 hover:bg-red-100"
                             >
                               Delete

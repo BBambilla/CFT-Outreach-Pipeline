@@ -17,26 +17,6 @@ export const StudentHome: React.FC = () => {
   const [supportRequests, setSupportRequests] = useState<SupportRequest[]>([]);
   const [supportThreadId, setSupportThreadId] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!currentUser || supportRequests.length === 0) return;
-    
-    let hasChanges = false;
-    const unseen = supportRequests.filter(req => req.admin_response && req.response_seen === false);
-    
-    if (unseen.length > 0) {
-      unseen.forEach(req => {
-        supabase.rpc('mark_support_response_seen', { p_request_id: req.id }).then();
-      });
-      
-      setSupportRequests(prev => prev.map(r => {
-        if (r.admin_response && r.response_seen === false) {
-          return { ...r, response_seen: true };
-        }
-        return r;
-      }));
-    }
-  }, [supportRequests, currentUser]);
-
   const toggleLeadModal = () => setIsAddingLead(!isAddingLead);
 
   useEffect(() => {
