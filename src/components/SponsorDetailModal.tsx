@@ -76,7 +76,7 @@ export const SponsorDetailModal: React.FC<{ sponsorId: string, onClose: () => vo
     }
 
     if (template.title === 'Sponsorship Outreach') {
-      const c = owner?.country?.trim() || currentUser?.country?.trim();
+      const c = sponsor.country?.trim();
       subjectText = `Supporting National Tourism Climate Resilience in ${c ? c : 'your country'}`;
       text = `Dear [First name],
 
@@ -112,12 +112,12 @@ Best wishes,`;
     }
 
     const getCoordinatorName = () => {
-      if (authEmail === 'pratishtha@cft-app.local') return 'Pratishtha Parajuli';
+      if (authEmail === 'pratishtha@cft-app.local' || authEmail === 'pratishtha@thesunprogram.com') return 'Pratishtha Parajuli';
       return 'Olly Wheatcroft';
     };
 
     const getCoordinatorRole = () => {
-      if (authEmail === 'pratishtha@cft-app.local') return 'Education Manager';
+      if (authEmail === 'pratishtha@cft-app.local' || authEmail === 'pratishtha@thesunprogram.com') return 'Education Manager';
       return 'Programme Manager';
     };
 
@@ -160,7 +160,7 @@ Best wishes,`;
       }
     }
 
-    const match = text.match(/\n+(Best(?: regards)?|Warm regards|Sincerely|Best wishes),[\s\S]*$/i);
+    const match = text.match(/(?:\n|^)+(Best(?: regards| wishes)?|Warm regards|Sincerely|Kind regards),[\s\S]*$/i);
     if (match) {
       text = text.replace(match[0], `\n\n${match[1]},`);
     }

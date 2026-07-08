@@ -75,6 +75,11 @@ export const AddLeadModal: React.FC<AddLeadModalProps> = ({ onClose }) => {
       return;
     }
     
+    if (classification === 'Sponsorships' && !scholarshipCountry.trim()) {
+      alert("Sponsorships require a target Country.");
+      return;
+    }
+    
     const newSponsor: Sponsor = {
       id: uuidv4(),
       assignedStudentId: role === 'coordinator' ? 'student-admin' : (currentUser?.id || 'unassigned'),
@@ -91,6 +96,7 @@ export const AddLeadModal: React.FC<AddLeadModalProps> = ({ onClose }) => {
       status: 'To Research', // Default status for new leads
       priority: 'Medium',
       createdAt: new Date().toISOString(),
+      country: classification === 'Sponsorships' ? scholarshipCountry.trim() : (currentUser?.country || ''),
       chapter_leader_name: getLoggedInName(),
     };
     
@@ -287,6 +293,20 @@ export const AddLeadModal: React.FC<AddLeadModalProps> = ({ onClose }) => {
                     />
                   </div>
                 </div>
+                
+                {classification === 'Sponsorships' && (
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-700 mb-1">Country <span className="text-red-500">*</span></label>
+                    <input 
+                      type="text" 
+                      value={scholarshipCountry}
+                      onChange={(e) => setScholarshipCountry(e.target.value)}
+                      required={classification === 'Sponsorships'}
+                      className="w-full border border-slate-200 rounded-lg p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-orange/50 focus:border-brand-orange"
+                      placeholder="Target country for the sponsorship"
+                    />
+                  </div>
+                )}
                 
                 <div>
                   <label className="block text-sm font-semibold text-slate-700 mb-1">Notes</label>

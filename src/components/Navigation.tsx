@@ -3,6 +3,8 @@ import { useAppContext } from '../context/AppContext';
 import { Layers, Presentation, Compass, Users, LogOut, LifeBuoy, Bell, CheckCircle2, Menu, X } from 'lucide-react';
 import { Logo } from './Logo';
 import { RequestSupportModal } from './RequestSupportModal';
+import { SupportThreadModal } from './SupportThreadModal';
+import { SupportRequest } from '../types';
 import { SponsorDetailModal } from './SponsorDetailModal';
 import { supabase } from '../lib/supabase';
 
@@ -19,7 +21,24 @@ export const Navigation: React.FC = () => {
   const [selectedSponsorId, setSelectedSponsorId] = useState<string | null>(null);
   const [clearingIds, setClearingIds] = useState<Set<string>>(new Set());
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [supportItems, setSupportItems] = useState<SupportRequest[]>([]);
+  const [supportThreadId, setSupportThreadId] = useState<string | null>(null);
   const inboxRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+  const load = async () => {
+    const { data } = await supabase.from('support_requests').select('*');
+    if (!data) return;
+    setSupportItems(role === 'coordinator'
+      ? data.filter((r: any) => r.status === 'pending')
+      : data.filter((r: any) => r.admin_response && r.response_seen === false));
+  };
+  load();
+  const ch = supabase.channel('nav-support')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'support_requests' }, () => load())
+    .subscribe();
+  return () => { supabase.removeChannel(ch); };
+}, [role]);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -38,6 +57,8 @@ export const Navigation: React.FC = () => {
   const newResponseSponsors = sponsors
     .filter(s => s.has_new_reply)
     .sort((a, b) => new Date(b.last_reply_at || 0).getTime() - new Date(a.last_reply_at || 0).getTime());
+
+  const totalNotifications = newResponseSponsors.length + supportItems.length;
 
   const statusBorderColors: Record<string, string> = {
     'To Research': 'border-t-slate-400',
@@ -98,9 +119,9 @@ export const Navigation: React.FC = () => {
                 className="p-2 text-white/90 hover:bg-white/20 hover:text-white rounded-lg transition-colors relative"
               >
                 <Bell size={20} />
-                {newResponseSponsors.length > 0 && (
+                {totalNotifications > 0 && (
                   <span className="absolute top-1 right-1 w-4 h-4 bg-red-500 text-white text-[10px] font-bold flex items-center justify-center rounded-full border-2 border-brand-yellow">
-                    {newResponseSponsors.length}
+                    {totalNotifications}
                   </span>
                 )}
               </button>
@@ -108,12 +129,13 @@ export const Navigation: React.FC = () => {
               {isInboxOpen && (
                 <div className="absolute right-0 mt-2 w-[300px] sm:w-[340px] bg-white border border-slate-200 rounded-xl shadow-xl overflow-hidden z-50 flex flex-col max-h-[80vh]">
                   <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
-                    <h3 className="font-bold text-slate-800 text-sm">New Responses</h3>
-                    <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">{newResponseSponsors.length} new</span>
+                    <h3 className="font-bold text-slate-800 text-sm">Notifications</h3>
+                    <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">{totalNotifications} new</span>
                   </div>
+
                   <div className="overflow-y-auto p-2 space-y-2 flex-1">
                     {newResponseSponsors.length === 0 ? (
-                      <div className="text-sm text-center text-slate-500 py-8">No new responses</div>
+                      <div className="text-sm text-center text-slate-500 py-8">No new sponsor responses</div>
                     ) : (
                       newResponseSponsors.map(sponsor => {
                         const owner = students.find(s => s.id === sponsor.assignedStudentId);
@@ -167,6 +189,18 @@ export const Navigation: React.FC = () => {
                       })
                     )}
                   </div>
+                  {supportItems.length > 0 && (
+                    <div className="border-t border-slate-100 pt-2 px-2 pb-2">
+                      <div className="px-2 pb-1 text-[11px] font-bold uppercase tracking-wide text-slate-400">Support</div>
+                      {supportItems.map(req => (
+                        <div key={req.id} onClick={() => { setSupportThreadId(req.id); setIsInboxOpen(false); }}
+                          className="p-3 rounded-xl border border-slate-200 shadow-sm cursor-pointer hover:border-brand-orange hover:shadow-md transition-all bg-white mb-2">
+                          <h3 className="font-bold text-sm text-slate-800 leading-tight">{req.subject}</h3>
+                          <p className="text-xs text-slate-500 mt-0.5">{role === 'coordinator' ? `${req.rep_name} • ${req.country}` : 'New reply from the support team'}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -237,6 +271,7 @@ export const Navigation: React.FC = () => {
       {selectedSponsorId && (
         <SponsorDetailModal sponsorId={selectedSponsorId} onClose={() => setSelectedSponsorId(null)} />
       )}
+      {supportThreadId && (<SupportThreadModal requestId={supportThreadId} onClose={() => setSupportThreadId(null)} />)}
     </nav>
   );
 };

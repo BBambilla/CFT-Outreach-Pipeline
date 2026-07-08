@@ -119,6 +119,11 @@ export interface SupportRequest {
   created_at: string;
   status: 'pending' | 'actioned';
   category: 'Registry' | 'CFT Training';
+  admin_response?: string;
+  responded_at?: string;
+  responded_by?: string;
+  response_seen?: boolean;
+  conversation?: { sender: string; name: string; body: string; at: string }[];
 }
 
 export type ViewType = 'pipeline' | 'knowledgeBase';

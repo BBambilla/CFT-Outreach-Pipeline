@@ -6,6 +6,7 @@ import { SponsorDetailModal } from './SponsorDetailModal';
 import { AddLeadModal } from './AddLeadModal';
 import { Plus, LifeBuoy, Info, MessageCircle } from 'lucide-react';
 import { RequestSupportModal } from './RequestSupportModal';
+import { SupportThreadModal } from './SupportThreadModal';
 import { supabase } from '../lib/supabase';
 
 export const StudentHome: React.FC = () => {
@@ -14,6 +15,29 @@ export const StudentHome: React.FC = () => {
   const [isAddingLead, setIsAddingLead] = useState(false);
   const [isSupportModalOpen, setIsSupportModalOpen] = useState(false);
   const [supportRequests, setSupportRequests] = useState<SupportRequest[]>([]);
+  const [supportThreadId, setSupportThreadId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!currentUser || supportRequests.length === 0) return;
+    
+    let hasChanges = false;
+    const unseen = supportRequests.filter(req => req.admin_response && req.response_seen === false);
+    
+    if (unseen.length > 0) {
+      unseen.forEach(req => {
+        supabase.rpc('mark_support_response_seen', { p_request_id: req.id }).then();
+      });
+      
+      setSupportRequests(prev => prev.map(r => {
+        if (r.admin_response && r.response_seen === false) {
+          return { ...r, response_seen: true };
+        }
+        return r;
+      }));
+    }
+  }, [supportRequests, currentUser]);
+
+  const toggleLeadModal = () => setIsAddingLead(!isAddingLead);
 
   useEffect(() => {
     if (!currentUser) return;
@@ -111,7 +135,7 @@ export const StudentHome: React.FC = () => {
       </section>
 
       {/* My Support Requests */}
-      <section className="mb-12">
+      <section className="mb-12" id="support-requests">
         <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
           <div className="px-6 py-4 border-b border-slate-200 bg-slate-50/50 flex justify-between items-center">
             <h2 className="text-base font-semibold font-heading text-slate-900 flex items-center">
@@ -138,7 +162,10 @@ export const StudentHome: React.FC = () => {
                       {new Date(req.created_at).toLocaleDateString()} {new Date(req.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                     </span>
                   </div>
-                  <p className="text-sm text-slate-700 whitespace-pre-wrap">{req.message}</p>
+                                    <p className="text-sm text-slate-700 whitespace-pre-wrap">{req.message}</p>
+                  <button onClick={() => setSupportThreadId(req.id)} className="mt-3 text-xs font-bold text-brand-orange hover:underline">
+                    View &amp; Reply{req.admin_response && req.response_seen === false ? ' • New response' : ''}
+                  </button>
                 </div>
               ))
             )}
@@ -160,6 +187,7 @@ export const StudentHome: React.FC = () => {
       {isSupportModalOpen && (
         <RequestSupportModal onClose={() => setIsSupportModalOpen(false)} />
       )}
+      {supportThreadId && (<SupportThreadModal requestId={supportThreadId} onClose={() => setSupportThreadId(null)} />)}
     </div>
   );
 };

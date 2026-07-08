@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { Mail, AlertTriangle, Clock, Trophy, Users, Plus, KanbanSquare, LayoutDashboard, ShieldAlert, Upload, MessageCircle, List, Search, Filter, CalendarDays, Users2, Flag, ArrowUpDown, Map } from 'lucide-react';
 import { BulkEmailTab } from './BulkEmailTab';
+import { SupportThreadModal } from './SupportThreadModal';
 import { AddLeadModal } from './AddLeadModal';
 import { KanbanBoard } from './KanbanBoard';
 import { SponsorDetailModal } from './SponsorDetailModal';
@@ -17,6 +18,7 @@ export const CoordinatorDashboard: React.FC = () => {
   const [view, setView] = useState<'overview' | 'leads' | 'pipeline' | 'reps' | 'followups' | 'admin' | 'bulk-email'>('overview');
   const [selectedSponsorId, setSelectedSponsorId] = useState<string | null>(null);
   const [supportRequests, setSupportRequests] = useState<SupportRequest[]>([]);
+  const [supportThreadId, setSupportThreadId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -619,7 +621,12 @@ export const CoordinatorDashboard: React.FC = () => {
                               Mark as actioned
                             </button>
                             <button
-                              onClick={(e) => { e.stopPropagation(); handleDeleteSupportRequest(req); }}
+                              onClick={(e) => { e.stopPropagation(); setSupportThreadId(req.id); }}
+                              className="text-xs px-2.5 py-1 rounded-md border font-medium bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100"
+                            >
+                              View &amp; Reply
+                            </button>
+                            <button
                               className="text-xs px-2.5 py-1 rounded-md border font-medium transition-colors bg-red-50 border-red-200 text-red-700 hover:bg-red-100"
                             >
                               Delete
@@ -627,7 +634,9 @@ export const CoordinatorDashboard: React.FC = () => {
                           </div>
                         </div>
                       </div>
-                      <p className="text-sm text-slate-700 whitespace-pre-wrap mt-3 bg-white p-3 rounded-lg border border-slate-100 shadow-sm">{req.message}</p>
+                                            <p className="text-sm text-slate-700 whitespace-pre-wrap mt-3 bg-white p-3 rounded-lg border border-slate-100 shadow-sm">{req.message}</p>
+                      
+
                     </div>
                   ))
                 )}
@@ -690,7 +699,12 @@ export const CoordinatorDashboard: React.FC = () => {
                               Mark as pending
                             </button>
                             <button
-                              onClick={(e) => { e.stopPropagation(); handleDeleteSupportRequest(req); }}
+                              onClick={(e) => { e.stopPropagation(); setSupportThreadId(req.id); }}
+                              className="text-xs px-2.5 py-1 rounded-md border font-medium bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100"
+                            >
+                              View &amp; Reply
+                            </button>
+                            <button
                               className="text-xs px-2.5 py-1 rounded-md border font-medium transition-colors bg-red-50 border-red-200 text-red-700 hover:bg-red-100"
                             >
                               Delete
@@ -698,7 +712,9 @@ export const CoordinatorDashboard: React.FC = () => {
                           </div>
                         </div>
                       </div>
-                      <p className="text-sm text-slate-700 whitespace-pre-wrap mt-3 bg-white p-3 rounded-lg border border-slate-100 shadow-sm">{req.message}</p>
+                                            <p className="text-sm text-slate-700 whitespace-pre-wrap mt-3 bg-white p-3 rounded-lg border border-slate-100 shadow-sm">{req.message}</p>
+                      
+
                     </div>
                   ))
                 )}
@@ -1085,6 +1101,7 @@ export const CoordinatorDashboard: React.FC = () => {
       
       {isAddingLead && <AddLeadModal onClose={() => setIsAddingLead(false)} />}
       {selectedSponsorId && <SponsorDetailModal sponsorId={selectedSponsorId} onClose={() => setSelectedSponsorId(null)} />}
+      {supportThreadId && (<SupportThreadModal requestId={supportThreadId} onClose={() => setSupportThreadId(null)} />)}
     </div>
   );
 };
