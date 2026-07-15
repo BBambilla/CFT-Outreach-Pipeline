@@ -30,7 +30,7 @@ export const loadInitialData = () => {
       studentsMap.set(studentName, {
         id: deterministicId,
         name: studentName,
-        email: `${country.toLowerCase().replace(/\s+/g, '')}@thesunprogram.com`,
+        email: country === 'Trinidad and Tobago' ? 'trinidad-tobago@thesunprogram.com' : `${country.toLowerCase().replace(/\s+/g, '')}@thesunprogram.com`,
         country: country,
         continent: row['Continent / Region']?.trim() || '',
       });
