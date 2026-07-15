@@ -168,6 +168,8 @@ export const CoordinatorDashboard: React.FC = () => {
       complete: (results) => {
         const data = results.data as any[];
         
+        const uploaderName = (authEmail === 'pratishtha@cft-app.local' || authEmail === 'pratishtha@thesunprogram.com') ? 'Pratishtha Parajuli' : 'Olly Wheatcroft';
+
         const newSponsors: Sponsor[] = data.map(row => {
           let orgName = row['Organisation'] || row['Organization'] || row['Name'] || 'Unknown Organization';
           
@@ -186,7 +188,8 @@ export const CoordinatorDashboard: React.FC = () => {
             sourceNotes: '',
             researchNotes: '',
             priority: 'Medium',
-            createdAt: new Date().toISOString()
+            createdAt: new Date().toISOString(),
+            chapter_leader_name: uploaderName
           };
         });
 
@@ -917,6 +920,7 @@ export const CoordinatorDashboard: React.FC = () => {
                   <th className="px-4 py-3 font-semibold tracking-wider text-xs uppercase text-slate-500">Type</th>
                   <th className="px-4 py-3 font-semibold tracking-wider text-xs uppercase text-slate-500">Country</th>
                   <th className="px-4 py-3 font-semibold tracking-wider text-xs uppercase text-slate-500">Rep</th>
+                  <th className="px-4 py-3 font-semibold tracking-wider text-xs uppercase text-slate-500">Added By</th>
                   <th className="px-4 py-3 font-semibold tracking-wider text-xs uppercase text-slate-500">Priority</th>
                   <th className="px-4 py-3 font-semibold tracking-wider text-xs uppercase text-slate-500">Next Follow-up</th>
                 </tr>
@@ -924,7 +928,7 @@ export const CoordinatorDashboard: React.FC = () => {
               <tbody className="divide-y divide-slate-100">
                 {filteredLeads.length === 0 ? (
                   <tr>
-                    <td colSpan={8} className="px-4 py-8 text-center text-sm text-slate-500">No leads match the selected criteria.</td>
+                    <td colSpan={9} className="px-4 py-8 text-center text-sm text-slate-500">No leads match the selected criteria.</td>
                   </tr>
                 ) : (
                   filteredLeads.map(s => {
@@ -949,6 +953,7 @@ export const CoordinatorDashboard: React.FC = () => {
                         </td>
                         <td className="px-4 py-3 text-sm text-slate-700">{info.country}</td>
                         <td className="px-4 py-3 text-sm text-slate-600">{info.name}</td>
+                        <td className="px-4 py-3 text-sm text-slate-600">{s.chapter_leader_name || '-'}</td>
                         <td className="px-4 py-3 text-sm whitespace-nowrap">
                           <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
                             s.priority === 'High' ? 'bg-red-50 text-red-600 border border-red-100' :
