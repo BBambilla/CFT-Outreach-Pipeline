@@ -3,6 +3,7 @@ import { X, Plus, Trash2 } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 import { useAppContext } from '../context/AppContext';
 import { SponsorStatus, Sponsor } from '../types';
+import { supabase } from '../lib/supabase';
 
 interface AddLeadModalProps {
   onClose: () => void;
@@ -30,7 +31,7 @@ export const AddLeadModal: React.FC<AddLeadModalProps> = ({ onClose }) => {
     return currentUser?.name || '';
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (classification === 'CFT Training' || classification === 'Scholarships') {
@@ -44,6 +45,15 @@ export const AddLeadModal: React.FC<AddLeadModalProps> = ({ onClose }) => {
         return;
       }
       
+      for (const p of participants) {
+        const { data: existing } = await supabase.rpc('find_existing_lead', { p_email: p.email.trim() });
+        if (existing && existing.length > 0) {
+          const owner = existing[0].owner_name;
+          alert(`⚠️ This lead already exists.\n\n"${existing[0].organization}" is already in ${owner}'s pipeline.\n\nPlease coordinate with ${owner} before adding it again.`);
+          return;
+        }
+      }
+
       const newSponsors = participants.map(p => ({
         id: uuidv4(),
         assignedStudentId: currentUser?.id || 'unassigned',
@@ -80,6 +90,13 @@ export const AddLeadModal: React.FC<AddLeadModalProps> = ({ onClose }) => {
       return;
     }
     
+    const { data: existing } = await supabase.rpc('find_existing_lead', { p_email: email });
+    if (existing && existing.length > 0) {
+      const owner = existing[0].owner_name;
+      alert(`⚠️ This lead already exists.\n\n"${existing[0].organization}" is already in ${owner}'s pipeline.\n\nPlease coordinate with ${owner} before adding it again.`);
+      return;
+    }
+
     const newSponsor: Sponsor = {
       id: uuidv4(),
       assignedStudentId: role === 'coordinator' ? 'student-admin' : (currentUser?.id || 'unassigned'),
