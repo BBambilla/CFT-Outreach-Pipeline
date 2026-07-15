@@ -355,6 +355,49 @@ Best wishes,`;
           </div>
         </div>
 
+        {(() => {
+          const myEmail = (sponsor.email || '').trim().toLowerCase();
+          const dupes = myEmail ? sponsors.filter(s => s.id !== sponsor.id && (s.email || '').trim().toLowerCase() === myEmail) : [];
+          if (dupes.length === 0) return null;
+          return (
+            <div className="px-6 py-3 bg-amber-50 border-b border-amber-200">
+              <p className="text-sm font-bold text-amber-800">⚠️ Possible duplicate — this email ({sponsor.email}) is also on {dupes.length} other lead{dupes.length > 1 ? 's' : ''}:</p>
+              <div className="mt-2 space-y-1.5">
+                {dupes.map(d => {
+                  const dOwner = students.find(st => st.id === d.assignedStudentId);
+                  return (
+                    <div key={d.id} className="flex items-center justify-between gap-3 bg-white rounded-lg border border-amber-200 px-3 py-1.5">
+                      <span className="text-sm text-slate-700 truncate">{d.organization} <span className="text-slate-400">— {dOwner ? dOwner.name : 'Admin'}</span></span>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <button
+                          onClick={async () => {
+                            if (!window.confirm(`Merge "${d.organization}" INTO "${sponsor.organization}"? Its replies move here and it will be deleted.`)) return;
+                            const { error } = await supabase.rpc('merge_leads', { p_keep_id: sponsor.id, p_remove_id: d.id });
+                            if (error) { alert('Merge failed: ' + error.message); return; }
+                            deleteSponsor(d.id);
+                          }}
+                          className="text-xs font-bold text-white bg-brand-orange hover:opacity-90 px-2.5 py-1 rounded-md"
+                        >
+                          Merge into this
+                        </button>
+                        <button
+                          onClick={() => {
+                            if (!window.confirm(`Delete "${d.organization}"? This cannot be undone.`)) return;
+                            deleteSponsor(d.id);
+                          }}
+                          className="text-xs font-bold text-red-700 bg-red-50 border border-red-200 hover:bg-red-100 px-2.5 py-1 rounded-md"
+                        >
+                          Delete it
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })()}
+
         {/* content body */}
         <div className="flex flex-1 overflow-hidden">
           
