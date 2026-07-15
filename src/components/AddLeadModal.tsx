@@ -22,6 +22,7 @@ export const AddLeadModal: React.FC<AddLeadModalProps> = ({ onClose }) => {
   const [submissionDate, setSubmissionDate] = useState(new Date().toISOString().split('T')[0]);
   const [participants, setParticipants] = useState<{name: string, email: string}[]>([{name: '', email: ''}]);
   const [scholarshipCountry, setScholarshipCountry] = useState('');
+  const [chapterLeaderName, setChapterLeaderName] = useState('');
   
   const getLoggedInName = () => {
     if (role === 'coordinator') {
@@ -72,7 +73,7 @@ export const AddLeadModal: React.FC<AddLeadModalProps> = ({ onClose }) => {
         createdAt: new Date().toISOString(),
         submissionDate: submissionDate,
         country: classification === 'Scholarships' ? scholarshipCountry.trim() : (currentUser?.country || ''),
-        chapter_leader_name: getLoggedInName(),
+        chapter_leader_name: chapterLeaderName.trim() || getLoggedInName(),
       }));
       
       addBulkSponsors(newSponsors);
@@ -114,7 +115,7 @@ export const AddLeadModal: React.FC<AddLeadModalProps> = ({ onClose }) => {
       priority: 'Medium',
       createdAt: new Date().toISOString(),
       country: classification === 'Sponsorships' ? scholarshipCountry.trim() : (currentUser?.country || ''),
-      chapter_leader_name: getLoggedInName(),
+      chapter_leader_name: chapterLeaderName.trim() || getLoggedInName(),
     };
     
     addSponsor(newSponsor);
@@ -179,9 +180,9 @@ export const AddLeadModal: React.FC<AddLeadModalProps> = ({ onClose }) => {
                     <label className="block text-sm font-semibold text-slate-700 mb-1">Chapter Leader Name</label>
                     <input 
                       type="text" 
-                      value={getLoggedInName()}
-                      readOnly
-                      className="w-full border border-slate-200 rounded-lg p-2.5 text-sm bg-slate-50 text-slate-500 cursor-not-allowed"
+                      value={chapterLeaderName || getLoggedInName()}
+                      onChange={(e) => setChapterLeaderName(e.target.value)}
+                      className="w-full border border-slate-200 rounded-lg p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-orange/50 focus:border-brand-orange"
                     />
                   </div>
                   <div>

@@ -112,7 +112,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           submissionDate: s.submission_date,
           enrolmentDate: s.enrolment_date,
           trainingCompleted: s.training_completed,
-          certificateDate: s.certificate_date
+          certificateDate: s.certificate_date,
+          chapter_leader_name: s.chapter_leader_name
         })));
       }
 
@@ -439,7 +440,8 @@ Best wishes,`;
       submission_date: sponsor.submissionDate || null,
       enrolment_date: sponsor.enrolmentDate || null,
       training_completed: sponsor.trainingCompleted,
-      certificate_date: sponsor.certificateDate || null
+      certificate_date: sponsor.certificateDate || null,
+      chapter_leader_name: sponsor.chapter_leader_name || null
     }]);
     if (error) {
       console.error(error);
@@ -474,7 +476,8 @@ Best wishes,`;
       submission_date: s.submissionDate || null,
       enrolment_date: s.enrolmentDate || null,
       training_completed: s.trainingCompleted,
-      certificate_date: s.certificateDate || null
+      certificate_date: s.certificateDate || null,
+      chapter_leader_name: s.chapter_leader_name || null
     }));
     await supabase.from('sponsors').insert(insertData);
   };
