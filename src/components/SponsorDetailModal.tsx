@@ -732,6 +732,7 @@ Best wishes,`;
                                         date: new Date().toISOString(), 
                                         summary: `Email sent to ${emailTo} | Subject: ${draftSubject}${notes}` 
                                       });
+                                      supabase.rpc('log_sent_email', { p_to_email: sponsor.email || '', p_to_name: sponsor.contactName || sponsor.organization || '', p_cc: null, p_subject: draftSubject, p_body_html: formattedHtml, p_body_text: plainText, p_sent_by_email: finalFrom, p_sent_by_name: finalFromName, p_sponsor_id: sponsorId });
                                       updateSponsor(sponsorId, { status: 'Contacted', lastContactedAt: new Date().toISOString() });
                                       await supabase.rpc('clear_new_reply', { p_sponsor_id: sponsorId });
                                       setEmailSuccess(`Email sent successfully to ${emailTo}${notes}`);

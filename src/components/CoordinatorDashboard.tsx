@@ -3,9 +3,10 @@ import { useAppContext } from '../context/AppContext';
 import { PILELINE_STATUSES, Sponsor, SupportRequest } from '../types';
 import { supabase } from '../lib/supabase';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { Mail, AlertTriangle, Clock, Trophy, Users, Plus, KanbanSquare, LayoutDashboard, ShieldAlert, Upload, MessageCircle, List, Search, Filter, CalendarDays, Users2, Flag, ArrowUpDown, Map, Download } from 'lucide-react';
+import { Mail, AlertTriangle, Clock, Trophy, Users, Plus, KanbanSquare, LayoutDashboard, ShieldAlert, Upload, MessageCircle, List, Search, Filter, CalendarDays, Users2, Flag, ArrowUpDown, Map, Download, Send } from 'lucide-react';
 import { BulkEmailTab } from './BulkEmailTab';
 import { RepliesInbox } from './RepliesInbox';
+import { SentEmails } from './SentEmails';
 import { SupportThreadModal } from './SupportThreadModal';
 import { AddLeadModal } from './AddLeadModal';
 import { KanbanBoard } from './KanbanBoard';
@@ -16,7 +17,7 @@ import { v4 as uuidv4 } from 'uuid';
 export const CoordinatorDashboard: React.FC = () => {
   const { sponsors, students, addBulkSponsors, authEmail } = useAppContext();
   const [isAddingLead, setIsAddingLead] = useState(false);
-  const [view, setView] = useState<'overview' | 'leads' | 'pipeline' | 'reps' | 'followups' | 'admin' | 'bulk-email' | 'replies'>('overview');
+  const [view, setView] = useState<'overview' | 'leads' | 'pipeline' | 'reps' | 'followups' | 'admin' | 'bulk-email' | 'replies' | 'sent'>('overview');
   const [selectedSponsorId, setSelectedSponsorId] = useState<string | null>(null);
   const [supportRequests, setSupportRequests] = useState<SupportRequest[]>([]);
   const [supportThreadId, setSupportThreadId] = useState<string | null>(null);
@@ -550,6 +551,13 @@ export const CoordinatorDashboard: React.FC = () => {
             >
               <Mail size={16} />
               Replies
+            </button>
+            <button
+              onClick={() => setView('sent')}
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${view === 'sent' ? 'bg-white text-brand-orange shadow-sm border border-slate-200/50' : 'text-slate-600 hover:text-slate-900'}`}
+            >
+              <Send size={16} />
+              Sent
             </button>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -1135,6 +1143,8 @@ export const CoordinatorDashboard: React.FC = () => {
         <BulkEmailTab />
       ) : view === 'replies' ? (
         <RepliesInbox onOpenLead={setSelectedSponsorId} />
+      ) : view === 'sent' ? (
+        <SentEmails />
       ) : (
         <div className="mt-8 flex-1 w-full bg-slate-50 border shadow-inner overflow-x-auto border-t border-slate-200 px-4 sm:px-6 lg:px-8 py-6 sm:py-8 -mx-4 sm:-mx-6 lg:-mx-8 min-h-[500px]">
           <KanbanBoard sponsors={adminSponsors} archivedSponsors={adminArchivedSponsors} onSponsorClick={setSelectedSponsorId} />

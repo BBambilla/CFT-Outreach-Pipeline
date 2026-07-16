@@ -265,6 +265,7 @@ export const BulkEmailTab: React.FC = () => {
         if (response.ok) {
           successes++;
           updatedRecipients[recipIdx].status = 'success';
+          supabase.rpc('log_sent_email', { p_to_email: recipient.email, p_to_name: recipient.name, p_cc: null, p_subject: pSubject, p_body_html: pHtml, p_body_text: plainText, p_sent_by_email: finalFrom, p_sent_by_name: finalFromName, p_sponsor_id: null });
         } else {
           failures++;
           const respData = await response.json();
