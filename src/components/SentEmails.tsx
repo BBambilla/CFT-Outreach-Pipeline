@@ -1,15 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase';
-import { Send, Search, ChevronDown, ChevronRight } from 'lucide-react';
-
-const TEAM = [
-  { n: 'Geoffrey', e: 'glipman@gmail.com' }, { n: 'Olly', e: 'olly@thesunprogram.com' },
-  { n: 'Bonna', e: 'bonnabambilla@gmail.com' }, { n: 'Maya', e: 'maya@thesunprogram.com' },
-  { n: 'Hans', e: 'hansfr55@gmail.com' }, { n: 'Rahul', e: 'rahul@thesunprogram.com' },
-  { n: 'Amos', e: 'amos@thesunprogram.com' }, { n: 'Helly', e: 'helly.he@thesunprogram.com' },
-  { n: 'Angy', e: 'angela@thesunprogram.com' }, { n: 'Pratishtha', e: 'pratishtha@thesunprogram.com' },
-  { n: 'Pratishtha (hotmail)', e: 'pratishtha_p@hotmail.com' },
-];
+import { Send, Search, ChevronDown, ChevronRight, Paperclip, X, FileText } from 'lucide-react';
+import { CcField } from './CcField';
 
 const toHtml = (t: string) => (t || '')
   .replace(/</g, '&lt;').replace(/>/g, '&gt;')
@@ -27,6 +19,9 @@ export const SentEmails: React.FC = () => {
   const [to, setTo] = useState(''); const [cc, setCc] = useState('');
   const [subject, setSubject] = useState(''); const [bodyText, setBodyText] = useState('');
   const [sending, setSending] = useState(false);
+  const [attachments, setAttachments] = useState<{filename: string, url?: string}[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   const load = async () => {
     const { data } = await supabase.from('sent_emails').select('*').order('created_at', { ascending: false }).limit(500);
@@ -45,18 +40,34 @@ export const SentEmails: React.FC = () => {
     return (m.to_email||'').toLowerCase().includes(q) || (m.to_name||'').toLowerCase().includes(q) || (m.subject||'').toLowerCase().includes(q) || (m.sent_by_name||'').toLowerCase().includes(q);
   });
 
-  const openEditor = (m: any) => { setCurrent(m); setEditId(m.id); setTo(m.to_email || ''); setCc(m.cc || ''); setSubject(m.subject || ''); setBodyText(m.body_text || ''); };
-  const addCc = (e: string) => setCc(prev => { const l = (prev || '').split(/[,;]+/).map(s => s.trim()).filter(Boolean); if (!l.includes(e)) l.push(e); return l.join(', '); });
+  const openEditor = (m: any) => { setCurrent(m); setEditId(m.id); setTo(m.to_email || ''); setCc(m.cc || ''); setSubject(m.subject || ''); setBodyText(m.body_text || ''); setAttachments([]); };
+
+  const handleFiles = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    setUploading(true);
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      const safeName = file.name.replace(/[^a-zA-Z0-9.-]/g, '-');
+      const path = `outreach/${Date.now()}-${safeName}`;
+      const { error } = await supabase.storage.from('attachments').upload(path, file);
+      if (error) { alert(`Failed to upload ${file.name}: ${error.message}`); continue; }
+      const { data } = supabase.storage.from('attachments').getPublicUrl(path);
+      setAttachments(prev => [...prev, { filename: file.name, url: data.publicUrl }]);
+    }
+    setUploading(false);
+    if (fileRef.current) fileRef.current.value = '';
+  };
 
   const sendEdited = async () => {
     if (!to.trim() || sending) return;
     setSending(true);
     try {
       const resp = await fetch('/api/send-email', { method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ from: current.sent_by_email, fromName: current.sent_by_name, to, cc: cc || undefined, subject, body: bodyText, html: toHtml(bodyText) }) });
+        body: JSON.stringify({ from: current.sent_by_email, fromName: current.sent_by_name, to, cc: cc || undefined, subject, body: bodyText, html: toHtml(bodyText), attachments: attachments.length > 0 ? attachments : undefined }) });
       if (!resp.ok) { alert('Send failed.'); setSending(false); return; }
       supabase.rpc('log_sent_email', { p_to_email: to, p_to_name: current.to_name, p_cc: cc || null, p_subject: subject, p_body_html: toHtml(bodyText), p_body_text: bodyText, p_sent_by_email: current.sent_by_email, p_sent_by_name: current.sent_by_name, p_sponsor_id: current.sponsor_id }).then(() => {}, () => {});
-      setEditId(null); setSending(false); load(); alert('Sent.');
+      setEditId(null); setSending(false); setAttachments([]); load(); alert('Sent.');
     } catch (e: any) { alert('Send failed: ' + e.message); setSending(false); }
   };
 
@@ -103,17 +114,33 @@ export const SentEmails: React.FC = () => {
                     <div><label className="text-[11px] font-bold text-slate-500 uppercase">To</label>
                       <input value={to} onChange={e => setTo(e.target.value)} className="w-full text-sm border border-slate-300 rounded p-2 focus:outline-none focus:ring-1 focus:ring-brand-orange" /></div>
                     <div><label className="text-[11px] font-bold text-slate-500 uppercase">Cc</label>
-                      <input value={cc} onChange={e => setCc(e.target.value)} placeholder="comma-separated" className="w-full text-sm border border-slate-300 rounded p-2 focus:outline-none focus:ring-1 focus:ring-brand-orange" />
-                      <div className="flex flex-wrap items-center gap-1.5 mt-1"><span className="text-[11px] text-slate-400">Quick Cc:</span>
-                        {TEAM.map(t => (<button key={t.e} type="button" onClick={() => addCc(t.e)} className="text-[11px] px-2 py-0.5 rounded-full border border-slate-200 bg-slate-50 text-slate-600 hover:bg-brand-orange hover:text-white hover:border-brand-orange transition-colors">+{t.n}</button>))}
-                      </div></div>
+                      <CcField value={cc} onChange={setCc} />
+                    </div>
                     <div><label className="text-[11px] font-bold text-slate-500 uppercase">Subject</label>
                       <input value={subject} onChange={e => setSubject(e.target.value)} className="w-full text-sm border border-slate-300 rounded p-2 focus:outline-none focus:ring-1 focus:ring-brand-orange font-medium" /></div>
                     <div><label className="text-[11px] font-bold text-slate-500 uppercase">Message</label>
                       <textarea value={bodyText} onChange={e => setBodyText(e.target.value)} rows={10} className="w-full text-sm border border-slate-300 rounded p-2 focus:outline-none focus:ring-1 focus:ring-brand-orange" /></div>
+                    <div>
+                      <label className="text-[11px] font-bold text-slate-500 uppercase">Attachments</label>
+                      {attachments.length > 0 && (
+                        <div className="flex flex-wrap gap-2 mb-1.5 mt-1">
+                          {attachments.map((att, i) => (
+                            <span key={i} className="flex items-center gap-1 bg-white border border-slate-200 rounded px-2 py-0.5 text-xs text-slate-600 shadow-sm">
+                              <FileText className="w-3.5 h-3.5 text-brand-orange" />
+                              <span className="truncate max-w-[150px]" title={att.filename}>{att.filename}</span>
+                              <button type="button" onClick={() => setAttachments(prev => prev.filter((_, idx) => idx !== i))} className="text-slate-400 hover:text-red-500 ml-0.5" title="Remove"><X className="w-3.5 h-3.5" /></button>
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                      <input type="file" multiple ref={fileRef} style={{ display: 'none' }} onChange={handleFiles} />
+                      <button type="button" onClick={() => fileRef.current?.click()} disabled={uploading || sending} className="mt-1 text-xs font-medium text-slate-600 hover:text-brand-orange flex items-center bg-slate-100 hover:bg-orange-50 px-3 py-1.5 rounded-md border border-slate-200 shadow-sm disabled:opacity-50">
+                        <Paperclip className="w-3.5 h-3.5 mr-1.5" /> {uploading ? 'Uploading…' : 'Attach document'}
+                      </button>
+                    </div>
                     <div className="flex items-center gap-2">
                       <button onClick={sendEdited} disabled={sending || !to.trim()} className="text-xs font-bold text-white bg-brand-orange hover:opacity-90 px-4 py-1.5 rounded-md flex items-center gap-1.5 disabled:opacity-50"><Send size={13} /> {sending ? 'Sending…' : 'Send'}</button>
-                      <button onClick={() => setEditId(null)} className="text-xs font-semibold text-slate-500 hover:text-slate-800 px-3 py-1.5">Cancel</button>
+                      <button onClick={() => { setEditId(null); setAttachments([]); }} className="text-xs font-semibold text-slate-500 hover:text-slate-800 px-3 py-1.5">Cancel</button>
                     </div>
                   </div>
                 </div>

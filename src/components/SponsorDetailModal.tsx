@@ -3,6 +3,7 @@ import { useAppContext } from '../context/AppContext';
 import { Interaction, SponsorStatus, InboundMessage } from '../types';
 import { supabase } from '../lib/supabase';
 import { X, Search, Sparkles, Send, FileText, ChevronRight, PenSquare, ArrowRight, Trash2, AlertCircle, CheckCircle2, Paperclip } from 'lucide-react';
+import { CcField } from './CcField';
 
 export const SponsorDetailModal: React.FC<{ sponsorId: string, onClose: () => void }> = ({ sponsorId, onClose }) => {
   const { sponsors, updateSponsor, deleteSponsor, addInteraction, interactions, templates, resources, currentUser, students, role, authEmail } = useAppContext();
@@ -623,29 +624,7 @@ Best wishes,`;
                               placeholder="Subject"
                               className="w-full text-sm text-slate-900 border border-slate-200 rounded-md p-2 focus:outline-none focus:ring-1 focus:border-brand-orange font-medium"
                             />
-                            <input
-                              type="text"
-                              value={draftCc}
-                              onChange={(e) => setDraftCc(e.target.value)}
-                              placeholder="Cc (optional, comma-separated)"
-                              className="w-full text-sm text-slate-900 border border-slate-200 rounded-md p-2 focus:outline-none focus:ring-1 focus:border-brand-orange"
-                            />
-                            <div className="flex flex-wrap items-center gap-1.5">
-                              <span className="text-xs text-slate-400 mr-1">Quick Cc:</span>
-                              {[
-                                { n: 'Geoffrey', e: 'glipman@gmail.com' }, { n: 'Olly', e: 'olly@thesunprogram.com' },
-                                { n: 'Bonna', e: 'bonnabambilla@gmail.com' }, { n: 'Maya', e: 'maya@thesunprogram.com' },
-                                { n: 'Hans', e: 'hansfr55@gmail.com' }, { n: 'Rahul', e: 'rahul@thesunprogram.com' },
-                                { n: 'Amos', e: 'amos@thesunprogram.com' }, { n: 'Helly', e: 'helly.he@thesunprogram.com' },
-                                { n: 'Angy', e: 'angela@thesunprogram.com' }, { n: 'Pratishtha', e: 'pratishtha@thesunprogram.com' },
-                                { n: 'Pratishtha (hotmail)', e: 'pratishtha_p@hotmail.com' },
-                              ].map(t => (
-                                <button key={t.e} type="button" onClick={() => setDraftCc(prev => { const l = (prev || '').split(/[,;]+/).map(s => s.trim()).filter(Boolean); if (!l.includes(t.e)) l.push(t.e); return l.join(', '); })}
-                                  className="text-[11px] px-2 py-0.5 rounded-full border border-slate-200 bg-slate-50 text-slate-600 hover:bg-brand-orange hover:text-white hover:border-brand-orange transition-colors">
-                                  +{t.n}
-                                </button>
-                              ))}
-                            </div>
+                            <CcField value={draftCc} onChange={setDraftCc} />
                             <textarea 
                               value={draftEmail}
                               onChange={(e) => setDraftEmail(e.target.value)}

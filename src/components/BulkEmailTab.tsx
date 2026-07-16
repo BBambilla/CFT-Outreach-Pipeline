@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { supabase } from '../lib/supabase';
 import { Mail, CheckSquare, Square, Paperclip, X, AlertCircle, Play, Send } from 'lucide-react';
+import { CcField } from './CcField';
 
 interface Recipient {
   id: string;
@@ -350,29 +351,7 @@ export const BulkEmailTab: React.FC = () => {
               onChange={(e) => setSubject(e.target.value)}
               className="w-full border border-slate-200 rounded-lg p-3 focus:outline-none focus:border-brand-orange focus:ring-1 focus:ring-brand-orange font-medium"
             />
-            <input
-              type="text"
-              placeholder="Cc — optional, e.g. copy yourself (comma-separated)"
-              value={cc}
-              onChange={(e) => setCc(e.target.value)}
-              className="w-full border border-slate-200 rounded-lg p-3 focus:outline-none focus:border-brand-orange focus:ring-1 focus:ring-brand-orange text-sm"
-            />
-            <div className="flex flex-wrap items-center gap-1.5">
-              <span className="text-xs text-slate-400 mr-1">Quick Cc:</span>
-              {[
-                { n: 'Geoffrey', e: 'glipman@gmail.com' }, { n: 'Olly', e: 'olly@thesunprogram.com' },
-                { n: 'Bonna', e: 'bonnabambilla@gmail.com' }, { n: 'Maya', e: 'maya@thesunprogram.com' },
-                { n: 'Hans', e: 'hansfr55@gmail.com' }, { n: 'Rahul', e: 'rahul@thesunprogram.com' },
-                { n: 'Amos', e: 'amos@thesunprogram.com' }, { n: 'Helly', e: 'helly.he@thesunprogram.com' },
-                { n: 'Angy', e: 'angela@thesunprogram.com' }, { n: 'Pratishtha', e: 'pratishtha@thesunprogram.com' },
-                { n: 'Pratishtha (hotmail)', e: 'pratishtha_p@hotmail.com' },
-              ].map(t => (
-                <button key={t.e} type="button" onClick={() => setCc(prev => { const l = (prev || '').split(/[,;]+/).map(s => s.trim()).filter(Boolean); if (!l.includes(t.e)) l.push(t.e); return l.join(', '); })}
-                  className="text-[11px] px-2 py-0.5 rounded-full border border-slate-200 bg-slate-50 text-slate-600 hover:bg-brand-orange hover:text-white hover:border-brand-orange transition-colors">
-                  +{t.n}
-                </button>
-              ))}
-            </div>
+            <CcField value={cc} onChange={setCc} />
             
             <textarea
               className="w-full h-64 border border-slate-200 rounded-lg p-3 text-sm focus:outline-none focus:border-brand-orange focus:ring-1 focus:ring-brand-orange"
