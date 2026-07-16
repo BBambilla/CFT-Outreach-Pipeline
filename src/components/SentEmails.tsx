@@ -1,13 +1,32 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { Send, Search, RefreshCw, ChevronDown, ChevronRight } from 'lucide-react';
+import { Send, Search, ChevronDown, ChevronRight } from 'lucide-react';
+
+const TEAM = [
+  { n: 'Geoffrey', e: 'glipman@gmail.com' }, { n: 'Olly', e: 'olly@thesunprogram.com' },
+  { n: 'Bonna', e: 'bonnabambilla@gmail.com' }, { n: 'Maya', e: 'maya@thesunprogram.com' },
+  { n: 'Hans', e: 'hansfr55@gmail.com' }, { n: 'Rahul', e: 'rahul@thesunprogram.com' },
+  { n: 'Amos', e: 'amos@thesunprogram.com' }, { n: 'Helly', e: 'helly.he@thesunprogram.com' },
+  { n: 'Angy', e: 'angela@thesunprogram.com' }, { n: 'Pratishtha', e: 'pratishtha@thesunprogram.com' },
+  { n: 'Pratishtha (hotmail)', e: 'pratishtha_p@hotmail.com' },
+];
+
+const toHtml = (t: string) => (t || '')
+  .replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" style="color:#1155cc;">$1</a>')
+  .replace(/(?<!["'])(https?:\/\/[^\s"']+)/g, '<a href="$1" style="color:#1155cc;">$1</a>')
+  .replace(/\n/g, '<br>');
 
 export const SentEmails: React.FC = () => {
   const [emails, setEmails] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState('');
   const [openId, setOpenId] = useState<string | null>(null);
-  const [resendingId, setResendingId] = useState<string | null>(null);
+  const [editId, setEditId] = useState<string | null>(null);
+  const [current, setCurrent] = useState<any>(null);
+  const [to, setTo] = useState(''); const [cc, setCc] = useState('');
+  const [subject, setSubject] = useState(''); const [bodyText, setBodyText] = useState('');
+  const [sending, setSending] = useState(false);
 
   const load = async () => {
     const { data } = await supabase.from('sent_emails').select('*').order('created_at', { ascending: false }).limit(500);
@@ -26,20 +45,19 @@ export const SentEmails: React.FC = () => {
     return (m.to_email||'').toLowerCase().includes(q) || (m.to_name||'').toLowerCase().includes(q) || (m.subject||'').toLowerCase().includes(q) || (m.sent_by_name||'').toLowerCase().includes(q);
   });
 
-  const resend = async (m: any) => {
-    if (!window.confirm(`Resend this exact email to ${m.to_email}?`)) return;
-    setResendingId(m.id);
+  const openEditor = (m: any) => { setCurrent(m); setEditId(m.id); setTo(m.to_email || ''); setCc(m.cc || ''); setSubject(m.subject || ''); setBodyText(m.body_text || ''); };
+  const addCc = (e: string) => setCc(prev => { const l = (prev || '').split(/[,;]+/).map(s => s.trim()).filter(Boolean); if (!l.includes(e)) l.push(e); return l.join(', '); });
+
+  const sendEdited = async () => {
+    if (!to.trim() || sending) return;
+    setSending(true);
     try {
-      const resp = await fetch('/api/send-email', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ from: m.sent_by_email, fromName: m.sent_by_name, to: m.to_email, subject: m.subject, body: m.body_text || m.subject, html: m.body_html, cc: m.cc || undefined })
-      });
-      if (resp.ok) {
-        supabase.rpc('log_sent_email', { p_to_email: m.to_email, p_to_name: m.to_name, p_cc: m.cc, p_subject: m.subject, p_body_html: m.body_html, p_body_text: m.body_text, p_sent_by_email: m.sent_by_email, p_sent_by_name: m.sent_by_name, p_sponsor_id: m.sponsor_id }).then(() => {}, () => {});
-        alert('Resent.');
-      } else { alert('Resend failed.'); }
-    } catch (e: any) { alert('Resend failed: ' + e.message); }
-    setResendingId(null);
+      const resp = await fetch('/api/send-email', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ from: current.sent_by_email, fromName: current.sent_by_name, to, cc: cc || undefined, subject, body: bodyText, html: toHtml(bodyText) }) });
+      if (!resp.ok) { alert('Send failed.'); setSending(false); return; }
+      supabase.rpc('log_sent_email', { p_to_email: to, p_to_name: current.to_name, p_cc: cc || null, p_subject: subject, p_body_html: toHtml(bodyText), p_body_text: bodyText, p_sent_by_email: current.sent_by_email, p_sent_by_name: current.sent_by_name, p_sponsor_id: current.sponsor_id }).then(() => {}, () => {});
+      setEditId(null); setSending(false); load(); alert('Sent.');
+    } catch (e: any) { alert('Send failed: ' + e.message); setSending(false); }
   };
 
   return (
@@ -73,12 +91,31 @@ export const SentEmails: React.FC = () => {
                   <p className="text-xs text-slate-400 mt-0.5 truncate">to {m.to_email} · from {m.sent_by_name || m.sent_by_email}{m.cc ? ` · cc ${m.cc}` : ''}</p>
                 </div>
               </button>
-              {openId === m.id && (
+              {openId === m.id && editId !== m.id && (
                 <div className="px-4 pb-4 pl-11">
                   <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 text-sm text-slate-700 max-h-80 overflow-y-auto" dangerouslySetInnerHTML={{ __html: m.body_html || (m.body_text || '').replace(/\n/g,'<br>') }} />
-                  <button onClick={() => resend(m)} disabled={resendingId === m.id} className="mt-3 text-xs font-bold text-white bg-brand-orange hover:opacity-90 px-3 py-1.5 rounded-md flex items-center gap-1.5 disabled:opacity-50">
-                    <RefreshCw size={13} /> {resendingId === m.id ? 'Resending…' : 'Resend this email'}
-                  </button>
+                  <button onClick={() => openEditor(m)} className="mt-3 text-xs font-bold text-white bg-brand-orange hover:opacity-90 px-3 py-1.5 rounded-md">Edit &amp; resend</button>
+                </div>
+              )}
+              {editId === m.id && (
+                <div className="px-4 pb-4 pl-11">
+                  <div className="bg-white border border-brand-orange/40 rounded-lg p-3 space-y-2">
+                    <div><label className="text-[11px] font-bold text-slate-500 uppercase">To</label>
+                      <input value={to} onChange={e => setTo(e.target.value)} className="w-full text-sm border border-slate-300 rounded p-2 focus:outline-none focus:ring-1 focus:ring-brand-orange" /></div>
+                    <div><label className="text-[11px] font-bold text-slate-500 uppercase">Cc</label>
+                      <input value={cc} onChange={e => setCc(e.target.value)} placeholder="comma-separated" className="w-full text-sm border border-slate-300 rounded p-2 focus:outline-none focus:ring-1 focus:ring-brand-orange" />
+                      <div className="flex flex-wrap items-center gap-1.5 mt-1"><span className="text-[11px] text-slate-400">Quick Cc:</span>
+                        {TEAM.map(t => (<button key={t.e} type="button" onClick={() => addCc(t.e)} className="text-[11px] px-2 py-0.5 rounded-full border border-slate-200 bg-slate-50 text-slate-600 hover:bg-brand-orange hover:text-white hover:border-brand-orange transition-colors">+{t.n}</button>))}
+                      </div></div>
+                    <div><label className="text-[11px] font-bold text-slate-500 uppercase">Subject</label>
+                      <input value={subject} onChange={e => setSubject(e.target.value)} className="w-full text-sm border border-slate-300 rounded p-2 focus:outline-none focus:ring-1 focus:ring-brand-orange font-medium" /></div>
+                    <div><label className="text-[11px] font-bold text-slate-500 uppercase">Message</label>
+                      <textarea value={bodyText} onChange={e => setBodyText(e.target.value)} rows={10} className="w-full text-sm border border-slate-300 rounded p-2 focus:outline-none focus:ring-1 focus:ring-brand-orange" /></div>
+                    <div className="flex items-center gap-2">
+                      <button onClick={sendEdited} disabled={sending || !to.trim()} className="text-xs font-bold text-white bg-brand-orange hover:opacity-90 px-4 py-1.5 rounded-md flex items-center gap-1.5 disabled:opacity-50"><Send size={13} /> {sending ? 'Sending…' : 'Send'}</button>
+                      <button onClick={() => setEditId(null)} className="text-xs font-semibold text-slate-500 hover:text-slate-800 px-3 py-1.5">Cancel</button>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
