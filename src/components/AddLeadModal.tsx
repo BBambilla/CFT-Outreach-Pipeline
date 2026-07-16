@@ -35,7 +35,7 @@ export const AddLeadModal: React.FC<AddLeadModalProps> = ({ onClose }) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (classification === 'CFT Training' || classification === 'Scholarships') {
+    if (classification === 'CFT Training') {
       if (participants.some(p => !p.name.trim() || !p.email.trim())) {
         alert("All participants must have a Name and Email.");
         return;
@@ -86,8 +86,8 @@ export const AddLeadModal: React.FC<AddLeadModalProps> = ({ onClose }) => {
       return;
     }
     
-    if (classification === 'Sponsorships' && !scholarshipCountry.trim()) {
-      alert("Sponsorships require a target Country.");
+    if ((classification === 'Sponsorships' || classification === 'Scholarships') && !scholarshipCountry.trim()) {
+      alert("Please enter the target Country.");
       return;
     }
     
@@ -114,7 +114,7 @@ export const AddLeadModal: React.FC<AddLeadModalProps> = ({ onClose }) => {
       status: 'To Research', // Default status for new leads
       priority: 'Medium',
       createdAt: new Date().toISOString(),
-      country: classification === 'Sponsorships' ? scholarshipCountry.trim() : (currentUser?.country || ''),
+      country: (classification === 'Sponsorships' || classification === 'Scholarships') ? scholarshipCountry.trim() : (currentUser?.country || ''),
       chapter_leader_name: chapterLeaderName.trim() || getLoggedInName(),
     };
     
@@ -173,7 +173,7 @@ export const AddLeadModal: React.FC<AddLeadModalProps> = ({ onClose }) => {
               </select>
             </div>
             
-            {classification === 'CFT Training' || classification === 'Scholarships' ? (
+            {classification === 'CFT Training' ? (
               <>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
@@ -312,14 +312,14 @@ export const AddLeadModal: React.FC<AddLeadModalProps> = ({ onClose }) => {
                   </div>
                 </div>
                 
-                {classification === 'Sponsorships' && (
+                {(classification === 'Sponsorships' || classification === 'Scholarships') && (
                   <div>
                     <label className="block text-sm font-semibold text-slate-700 mb-1">Country <span className="text-red-500">*</span></label>
                     <input 
                       type="text" 
                       value={scholarshipCountry}
                       onChange={(e) => setScholarshipCountry(e.target.value)}
-                      required={classification === 'Sponsorships'}
+                      required={classification === 'Sponsorships' || classification === 'Scholarships'}
                       className="w-full border border-slate-200 rounded-lg p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-orange/50 focus:border-brand-orange"
                       placeholder="Target country for the sponsorship"
                     />
