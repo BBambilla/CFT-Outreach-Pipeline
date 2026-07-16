@@ -27,7 +27,7 @@ export const SupportThreadModal: React.FC<SupportThreadModalProps> = ({ requestI
       if (active && data) setReq(data);
     };
     load();
-    if (!isAdmin) supabase.rpc('mark_support_response_seen', { p_request_id: requestId });
+    if (!isAdmin) supabase.rpc('mark_support_response_seen', { p_request_id: requestId }).then(() => {}, () => {});
     const ch = supabase.channel('support-thread-' + requestId)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'support_requests', filter: `id=eq.${requestId}` }, () => load())
       .subscribe();
