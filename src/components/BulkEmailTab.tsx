@@ -495,19 +495,32 @@ export const BulkEmailTab: React.FC = () => {
                 </div>
               )}
               
-              <button 
-                onClick={() => {
-                  setSendComplete(false);
-                  setRecipients([]);
-                  setPasteData('');
-                  setSubject('');
-                  setBody('');
-                  setAttachments([]);
-                }}
-                className="mt-6 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 px-6 py-2.5 rounded-lg font-medium shadow-sm transition-colors"
-              >
-                Start New Bulk Send
-              </button>
+              <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+                <button
+                  onClick={() => {
+                    setSendComplete(false);
+                    setRecipients(prev => prev.map(r => ({ ...r, selected: false })));
+                    setSendProgress({ current: 0, total: 0, successes: 0, failures: 0 });
+                  }}
+                  className="bg-brand-orange text-white px-6 py-2.5 rounded-lg font-medium shadow-sm hover:opacity-90 transition-colors"
+                >
+                  Send to more recipients
+                </button>
+                <button
+                  onClick={() => {
+                    setSendComplete(false);
+                    setRecipients(prev => prev.map(r => ({ ...r, selected: false, status: undefined, errorMessage: undefined })));
+                    setSubject('');
+                    setBody('');
+                    setAttachments([]);
+                    setPasteData('');
+                    setSendProgress({ current: 0, total: 0, successes: 0, failures: 0 });
+                  }}
+                  className="bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 px-6 py-2.5 rounded-lg font-medium shadow-sm transition-colors"
+                >
+                  Start fresh (clear message)
+                </button>
+              </div>
             </div>
           </div>
         )}
