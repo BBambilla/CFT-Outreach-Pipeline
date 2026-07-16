@@ -479,7 +479,11 @@ Best wishes,`;
       certificate_date: s.certificateDate || null,
       chapter_leader_name: s.chapter_leader_name || null
     }));
-    await supabase.from('sponsors').insert(insertData);
+    const { error } = await supabase.from('sponsors').insert(insertData);
+    if (error) {
+      alert('Some leads could not be imported: ' + error.message);
+      loadData(currentUser?.id || '');
+    }
   };
 
   const deleteSponsor = async (id: string) => {

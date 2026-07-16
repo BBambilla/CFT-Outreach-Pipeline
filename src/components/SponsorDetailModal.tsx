@@ -630,6 +630,22 @@ Best wishes,`;
                               placeholder="Cc (optional, comma-separated)"
                               className="w-full text-sm text-slate-900 border border-slate-200 rounded-md p-2 focus:outline-none focus:ring-1 focus:border-brand-orange"
                             />
+                            <div className="flex flex-wrap items-center gap-1.5">
+                              <span className="text-xs text-slate-400 mr-1">Quick Cc:</span>
+                              {[
+                                { n: 'Geoffrey', e: 'glipman@gmail.com' }, { n: 'Olly', e: 'olly@thesunprogram.com' },
+                                { n: 'Bonna', e: 'bonnabambilla@gmail.com' }, { n: 'Maya', e: 'maya@thesunprogram.com' },
+                                { n: 'Hans', e: 'hansfr55@gmail.com' }, { n: 'Rahul', e: 'rahul@thesunprogram.com' },
+                                { n: 'Amos', e: 'amos@thesunprogram.com' }, { n: 'Helly', e: 'helly.he@thesunprogram.com' },
+                                { n: 'Angy', e: 'angela@thesunprogram.com' }, { n: 'Pratishtha', e: 'pratishtha@thesunprogram.com' },
+                                { n: 'Pratishtha (hotmail)', e: 'pratishtha_p@hotmail.com' },
+                              ].map(t => (
+                                <button key={t.e} type="button" onClick={() => setDraftCc(prev => { const l = (prev || '').split(/[,;]+/).map(s => s.trim()).filter(Boolean); if (!l.includes(t.e)) l.push(t.e); return l.join(', '); })}
+                                  className="text-[11px] px-2 py-0.5 rounded-full border border-slate-200 bg-slate-50 text-slate-600 hover:bg-brand-orange hover:text-white hover:border-brand-orange transition-colors">
+                                  +{t.n}
+                                </button>
+                              ))}
+                            </div>
                             <textarea 
                               value={draftEmail}
                               onChange={(e) => setDraftEmail(e.target.value)}
