@@ -18,6 +18,7 @@ export const BulkEmailTab: React.FC = () => {
   const [pasteData, setPasteData] = useState('');
   const [recipients, setRecipients] = useState<Recipient[]>([]);
   const [subject, setSubject] = useState('');
+  const [cc, setCc] = useState('');
   const [body, setBody] = useState('');
   const [attachments, setAttachments] = useState<{filename: string, url: string}[]>([]);
   const [isUploading, setIsUploading] = useState(false);
@@ -255,6 +256,7 @@ export const BulkEmailTab: React.FC = () => {
             from: finalFrom,
             fromName: finalFromName,
             to: recipient.email,
+            cc: cc || undefined,
             subject: pSubject.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '$1'),
             body: plainText,
             html: pHtml,
@@ -265,7 +267,7 @@ export const BulkEmailTab: React.FC = () => {
         if (response.ok) {
           successes++;
           updatedRecipients[recipIdx].status = 'success';
-          supabase.rpc('log_sent_email', { p_to_email: recipient.email, p_to_name: recipient.name, p_cc: null, p_subject: pSubject, p_body_html: pHtml, p_body_text: plainText, p_sent_by_email: finalFrom, p_sent_by_name: finalFromName, p_sponsor_id: null }).then(() => {}, () => {});
+          supabase.rpc('log_sent_email', { p_to_email: recipient.email, p_to_name: recipient.name, p_cc: cc || null, p_subject: pSubject, p_body_html: pHtml, p_body_text: plainText, p_sent_by_email: finalFrom, p_sent_by_name: finalFromName, p_sponsor_id: null }).then(() => {}, () => {});
         } else {
           failures++;
           const respData = await response.json();
@@ -347,6 +349,13 @@ export const BulkEmailTab: React.FC = () => {
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
               className="w-full border border-slate-200 rounded-lg p-3 focus:outline-none focus:border-brand-orange focus:ring-1 focus:ring-brand-orange font-medium"
+            />
+            <input
+              type="text"
+              placeholder="Cc — optional, e.g. copy yourself (comma-separated)"
+              value={cc}
+              onChange={(e) => setCc(e.target.value)}
+              className="w-full border border-slate-200 rounded-lg p-3 focus:outline-none focus:border-brand-orange focus:ring-1 focus:ring-brand-orange text-sm"
             />
             
             <textarea

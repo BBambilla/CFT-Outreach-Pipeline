@@ -17,6 +17,10 @@ export default async function handler(req: any, res: any) {
       ? payload.to
       : String(payload.to || '').split(/[,;]+/).map((s: string) => s.trim()).filter(Boolean);
 
+    const ccList = payload.cc
+      ? (Array.isArray(payload.cc) ? payload.cc : String(payload.cc).split(/[,;]+/).map((s: string) => s.trim()).filter(Boolean))
+      : [];
+
     if (!from || !subject || (!text && !html) || toList.length === 0) {
       return res.status(400).json({ ok: false, error: 'Missing required field' });
     }
@@ -30,6 +34,7 @@ export default async function handler(req: any, res: any) {
     };
     if (text) emailOptions.text = text;
     if (html) emailOptions.html = html;
+    if (ccList.length > 0) emailOptions.cc = ccList;
 
     if (Array.isArray(attachments) && attachments.length > 0) {
       emailOptions.attachments = attachments.map((a: any) =>

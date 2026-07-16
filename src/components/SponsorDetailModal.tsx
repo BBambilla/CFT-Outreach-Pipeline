@@ -37,6 +37,7 @@ export const SponsorDetailModal: React.FC<{ sponsorId: string, onClose: () => vo
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>('');
   const [draftEmail, setDraftEmail] = useState<string>('');
   const [draftSubject, setDraftSubject] = useState<string>('');
+  const [draftCc, setDraftCc] = useState<string>('');
   const [draftAttachments, setDraftAttachments] = useState<{filename: string, url?: string, content?: string}[]>([]);
   const [isSendingEmail, setIsSendingEmail] = useState(false);
   const [emailError, setEmailError] = useState<string>('');
@@ -622,6 +623,13 @@ Best wishes,`;
                               placeholder="Subject"
                               className="w-full text-sm text-slate-900 border border-slate-200 rounded-md p-2 focus:outline-none focus:ring-1 focus:border-brand-orange font-medium"
                             />
+                            <input
+                              type="text"
+                              value={draftCc}
+                              onChange={(e) => setDraftCc(e.target.value)}
+                              placeholder="Cc (optional, comma-separated)"
+                              className="w-full text-sm text-slate-900 border border-slate-200 rounded-md p-2 focus:outline-none focus:ring-1 focus:border-brand-orange"
+                            />
                             <textarea 
                               value={draftEmail}
                               onChange={(e) => setDraftEmail(e.target.value)}
@@ -715,6 +723,7 @@ Best wishes,`;
                                         from: finalFrom,
                                         fromName: finalFromName,
                                         to: sponsor.email || '',
+                                        cc: draftCc || undefined,
                                         subject: draftSubject.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '$1'),
                                         body: plainText,
                                         html: formattedHtml,
@@ -732,7 +741,7 @@ Best wishes,`;
                                         date: new Date().toISOString(), 
                                         summary: `Email sent to ${emailTo} | Subject: ${draftSubject}${notes}` 
                                       });
-                                      supabase.rpc('log_sent_email', { p_to_email: sponsor.email || '', p_to_name: sponsor.contactName || sponsor.organization || '', p_cc: null, p_subject: draftSubject, p_body_html: formattedHtml, p_body_text: plainText, p_sent_by_email: finalFrom, p_sent_by_name: finalFromName, p_sponsor_id: sponsorId }).then(() => {}, () => {});
+                                      supabase.rpc('log_sent_email', { p_to_email: sponsor.email || '', p_to_name: sponsor.contactName || sponsor.organization || '', p_cc: draftCc || null, p_subject: draftSubject, p_body_html: formattedHtml, p_body_text: plainText, p_sent_by_email: finalFrom, p_sent_by_name: finalFromName, p_sponsor_id: sponsorId }).then(() => {}, () => {});
                                       updateSponsor(sponsorId, { status: 'Contacted', lastContactedAt: new Date().toISOString() });
                                       await supabase.rpc('clear_new_reply', { p_sponsor_id: sponsorId });
                                       setEmailSuccess(`Email sent successfully to ${emailTo}${notes}`);
