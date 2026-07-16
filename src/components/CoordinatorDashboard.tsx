@@ -3,7 +3,7 @@ import { useAppContext } from '../context/AppContext';
 import { PILELINE_STATUSES, Sponsor, SupportRequest } from '../types';
 import { supabase } from '../lib/supabase';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { Mail, AlertTriangle, Clock, Trophy, Users, Plus, KanbanSquare, LayoutDashboard, ShieldAlert, Upload, MessageCircle, List, Search, Filter, CalendarDays, Users2, Flag, ArrowUpDown, Map } from 'lucide-react';
+import { Mail, AlertTriangle, Clock, Trophy, Users, Plus, KanbanSquare, LayoutDashboard, ShieldAlert, Upload, MessageCircle, List, Search, Filter, CalendarDays, Users2, Flag, ArrowUpDown, Map, Download } from 'lucide-react';
 import { BulkEmailTab } from './BulkEmailTab';
 import { RepliesInbox } from './RepliesInbox';
 import { SupportThreadModal } from './SupportThreadModal';
@@ -171,8 +171,12 @@ export const CoordinatorDashboard: React.FC = () => {
         
         const uploaderName = (authEmail === 'pratishtha@cft-app.local' || authEmail === 'pratishtha@thesunprogram.com') ? 'Pratishtha Parajuli' : 'Olly Wheatcroft';
 
+        const validClassifications = ['Registry', 'CFT Training', 'Sponsorships', 'Scholarships'];
+
         const newSponsors: Sponsor[] = data.map(row => {
           let orgName = row['Organisation'] || row['Organization'] || row['Name'] || 'Unknown Organization';
+          const rawClass = (row['Classification'] || row['Type'] || '').trim();
+          const rowClassification = validClassifications.find(c => c.toLowerCase() === rawClass.toLowerCase()) || 'Registry';
           
           return {
             id: uuidv4(),
@@ -183,7 +187,8 @@ export const CoordinatorDashboard: React.FC = () => {
             email: row['Email'] || '',
             phone: row['Telephone'] || row['Phone'] || '',
             website: row['Website'] || '',
-            classification: 'Sponsorships',
+            classification: rowClassification as any,
+            country: row['Country'] || '',
             assignedStudentId: view === 'admin' ? 'student-admin' : 'unassigned',
             rationale: row['Notes'] || '',
             sourceNotes: '',
@@ -196,6 +201,7 @@ export const CoordinatorDashboard: React.FC = () => {
 
         if (newSponsors.length > 0) {
           addBulkSponsors(newSponsors);
+          alert(`Imported ${newSponsors.length} lead${newSponsors.length > 1 ? 's' : ''}.`);
         }
         
         if (fileInputRef.current) {
@@ -206,6 +212,17 @@ export const CoordinatorDashboard: React.FC = () => {
         console.error('Error parsing CSV:', error);
       }
     });
+  };
+
+  const handleDownloadTemplate = () => {
+    const headers = ['Classification','Organisation','Contact Name','Title','Email','Phone','Website','Country','Notes'];
+    const example = ['Registry','Example Tourism Board','Jane Doe','Director of Sustainability','jane@example.com','+1 555 0100','https://example.com','Belize','Met at WTM — interested in the Registry'];
+    const csv = Papa.unparse({ fields: headers, data: [example] }, { quotes: true });
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'lead-upload-template.csv';
+    link.click();
   };
 
   // Active sponsors for the board
@@ -543,6 +560,14 @@ export const CoordinatorDashboard: React.FC = () => {
             >
               <Upload size={16} className="rotate-180" />
               <span className="hidden sm:inline">Export</span>
+            </button>
+            <button
+              onClick={handleDownloadTemplate}
+              className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-lg text-sm font-semibold hover:bg-slate-50 transition-colors shadow-sm"
+              title="Download a CSV template with the correct columns"
+            >
+              <Download size={16} />
+              <span className="hidden sm:inline">Template</span>
             </button>
             <input 
               type="file" 
