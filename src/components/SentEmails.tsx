@@ -35,7 +35,7 @@ export const SentEmails: React.FC = () => {
         body: JSON.stringify({ from: m.sent_by_email, fromName: m.sent_by_name, to: m.to_email, subject: m.subject, body: m.body_text || m.subject, html: m.body_html, cc: m.cc || undefined })
       });
       if (resp.ok) {
-        supabase.rpc('log_sent_email', { p_to_email: m.to_email, p_to_name: m.to_name, p_cc: m.cc, p_subject: m.subject, p_body_html: m.body_html, p_body_text: m.body_text, p_sent_by_email: m.sent_by_email, p_sent_by_name: m.sent_by_name, p_sponsor_id: m.sponsor_id });
+        supabase.rpc('log_sent_email', { p_to_email: m.to_email, p_to_name: m.to_name, p_cc: m.cc, p_subject: m.subject, p_body_html: m.body_html, p_body_text: m.body_text, p_sent_by_email: m.sent_by_email, p_sent_by_name: m.sent_by_name, p_sponsor_id: m.sponsor_id }).then(() => {}, () => {});
         alert('Resent.');
       } else { alert('Resend failed.'); }
     } catch (e: any) { alert('Resend failed: ' + e.message); }
