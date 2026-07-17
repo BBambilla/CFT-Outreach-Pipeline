@@ -6,6 +6,8 @@ import { CcField } from './CcField';
 const toHtml = (t: string) => (t || '')
   .replace(/</g, '&lt;').replace(/>/g, '&gt;')
   .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" style="color:#1155cc;">$1</a>')
+  .replace(/\*\*(?=\S)([^*\n]*?\S)\*\*/g, '<strong>$1</strong>')
+  .replace(/\*(?=\S)([^*\n]*?\S)\*/g, '<em>$1</em>')
   .replace(/(?<!["'])(https?:\/\/[^\s"']+)/g, '<a href="$1" style="color:#1155cc;">$1</a>')
   .replace(/\n/g, '<br>');
 
