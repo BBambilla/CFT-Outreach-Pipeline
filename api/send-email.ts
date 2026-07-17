@@ -25,12 +25,19 @@ export default async function handler(req: any, res: any) {
       return res.status(400).json({ ok: false, error: 'Missing required field' });
     }
 
+    // Coordinators' personal mailboxes don't feed the shared capture inbox, so their
+    // replies never reach the system. Add the shared inbox to their Reply-To so a reply
+    // lands in BOTH their own inbox AND the system (where it attaches to the lead).
+    const CAPTURE_INBOX = 'chapters@thesunprogram.com';
+    const COORDINATORS = ['pratishtha@thesunprogram.com', 'olly@thesunprogram.com'];
+    const isCoordinator = COORDINATORS.includes(String(from || '').trim().toLowerCase());
+
     const resend = new Resend(process.env.RESEND_API_KEY);
     const emailOptions: any = {
       from: fromName ? `${fromName} <${from}>` : from,
       to: toList,
       subject,
-      replyTo: from,
+      replyTo: isCoordinator ? [from, CAPTURE_INBOX] : from,
     };
     if (text) emailOptions.text = text;
     if (html) emailOptions.html = html;
