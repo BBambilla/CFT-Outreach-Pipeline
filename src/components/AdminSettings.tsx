@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { Users2, Plus, Trash2, FileText, Save } from 'lucide-react';
+import { Users2, Plus, Trash2, FileText, Save, Mail } from 'lucide-react';
 
 // ---------- Section 1: Team & Quick Cc ----------
 const TeamSection: React.FC = () => {
@@ -181,11 +181,90 @@ const TemplatesSection: React.FC = () => {
   );
 };
 
+// ---------- Section 3: People & send-from emails ----------
+const RepsSection: React.FC = () => {
+  const [people, setPeople] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [editId, setEditId] = useState<string | null>(null);
+  const [emailDraft, setEmailDraft] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [msg, setMsg] = useState('');
+  const [q, setQ] = useState('');
+
+  const load = async () => {
+    const { data } = await supabase.from('students').select('id,name,email,country').order('name');
+    setPeople(data || []);
+    setLoading(false);
+  };
+  useEffect(() => { load(); }, []);
+
+  const openEdit = (p: any) => { setEditId(p.id); setEmailDraft(p.email || ''); setMsg(''); };
+
+  const save = async (p: any) => {
+    const e = emailDraft.trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)) { setMsg('That email doesn’t look valid.'); return; }
+    setSaving(true); setMsg('');
+    const { error } = await supabase.from('students').update({ email: e }).eq('id', p.id);
+    setSaving(false);
+    if (error) { setMsg('Could not save: ' + error.message); return; }
+    setEditId(null); setMsg(`Updated ${p.name}’s email.`); load();
+  };
+
+  const filtered = people.filter(p => {
+    const s = q.trim().toLowerCase();
+    if (!s) return true;
+    return (p.name || '').toLowerCase().includes(s) || (p.email || '').toLowerCase().includes(s) || (p.country || '').toLowerCase().includes(s);
+  });
+
+  return (
+    <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+      <div className="px-6 py-4 border-b border-slate-200 bg-slate-50/50 flex items-center justify-between gap-3 flex-wrap">
+        <div>
+          <h2 className="text-base font-semibold font-heading text-slate-900 flex items-center">
+            <Mail className="w-5 h-5 mr-2 text-slate-500" /> People &amp; send-from emails
+          </h2>
+          <p className="text-xs text-slate-500 mt-1">Change the email a person sends outreach from. This does <b>not</b> change how they log in. Sending only works from <b>@thesunprogram.com</b> addresses.</p>
+        </div>
+        <input value={q} onChange={e => setQ(e.target.value)} placeholder="Search name / email…" className="text-sm border border-slate-300 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-brand-orange w-56 max-w-full" />
+      </div>
+      <div className="p-4">
+        {msg && <p className="text-xs text-slate-600 bg-slate-50 border border-slate-200 rounded px-3 py-2 mb-2">{msg}</p>}
+        <div className="border border-slate-200 rounded-lg divide-y divide-slate-100 max-h-[420px] overflow-y-auto">
+          {loading ? (
+            <div className="p-4 text-sm text-slate-500 text-center">Loading…</div>
+          ) : filtered.length === 0 ? (
+            <div className="p-4 text-sm text-slate-500 text-center">No one matches your search.</div>
+          ) : filtered.map(p => (
+            <div key={p.id} className="px-4 py-2.5">
+              <div className="flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <span className="text-sm font-semibold text-slate-800">{p.name}</span>
+                  {p.country && <span className="text-[11px] text-slate-500 ml-2 bg-slate-100 px-1.5 py-0.5 rounded">{p.country}</span>}
+                  {editId !== p.id && <div className="text-sm text-slate-500 truncate mt-0.5">{p.email || '(no email set)'}</div>}
+                </div>
+                {editId !== p.id && <button onClick={() => openEdit(p)} className="text-xs font-bold text-brand-orange hover:underline shrink-0">Edit</button>}
+              </div>
+              {editId === p.id && (
+                <div className="mt-2 flex items-center gap-2 flex-wrap">
+                  <input value={emailDraft} onChange={e => setEmailDraft(e.target.value)} placeholder="name@thesunprogram.com" className="flex-1 min-w-[200px] text-sm border border-slate-300 rounded p-2 focus:outline-none focus:ring-1 focus:ring-brand-orange" />
+                  <button onClick={() => save(p)} disabled={saving} className="text-xs font-bold text-white bg-brand-orange hover:opacity-90 px-4 py-1.5 rounded-md flex items-center gap-1.5 disabled:opacity-50"><Save size={13} /> {saving ? 'Saving…' : 'Save'}</button>
+                  <button onClick={() => setEditId(null)} className="text-xs font-semibold text-slate-500 hover:text-slate-800 px-3 py-1.5">Cancel</button>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export const AdminSettings: React.FC = () => {
   return (
     <div className="mt-8 flex-1 w-full max-w-3xl space-y-6">
       <TeamSection />
       <TemplatesSection />
+      <RepsSection />
     </div>
   );
 };
