@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { Users2, Plus, Trash2, FileText, Save, Mail } from 'lucide-react';
+import { Users2, Plus, Trash2, FileText, Save, Mail, Paperclip } from 'lucide-react';
 
 // ---------- Section 1: Team & Quick Cc ----------
 const TeamSection: React.FC = () => {
@@ -259,12 +259,98 @@ const RepsSection: React.FC = () => {
   );
 };
 
+// ---------- Section 4: Intro letters (PDF attachments) ----------
+const LETTER_BASE = 'https://jpftaqubuokdthecsmmx.supabase.co/storage/v1/object/public/attachments/';
+
+const LettersSection: React.FC = () => {
+  const [people, setPeople] = useState<any[]>([]);
+  const [repName, setRepName] = useState('');
+  const [busy, setBusy] = useState('');
+  const [msg, setMsg] = useState('');
+
+  useEffect(() => {
+    supabase.from('students').select('name').order('name').then(({ data }) => setPeople(data || []), () => {});
+  }, []);
+
+  const doUpload = async (path: string, file: File, label: string) => {
+    if (!file.name.toLowerCase().endsWith('.pdf')) { setMsg('Please choose a PDF file.'); return; }
+    setBusy(label); setMsg('');
+    const { error } = await supabase.storage.from('attachments').upload(path, file, { upsert: true, contentType: 'application/pdf' });
+    setBusy('');
+    if (error) { setMsg(`Could not upload the ${label}: ${error.message}`); return; }
+    setMsg(`Replaced the ${label}. The next email will attach the new file. (If the "View current" preview still looks old, that's just your browser cache — the sent email uses the newest version.)`);
+  };
+
+  const onPick = (path: string, label: string) => (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    if (f) doUpload(path, f, label);
+    e.target.value = '';
+  };
+
+  const btn = (disabled: boolean) =>
+    `text-xs font-bold px-3 py-1.5 rounded-md cursor-pointer whitespace-nowrap ${disabled ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : 'bg-brand-orange text-white hover:opacity-90'}`;
+
+  const registryPath = repName ? `registry/${repName.trim()}.pdf` : '';
+
+  return (
+    <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+      <div className="px-6 py-4 border-b border-slate-200 bg-slate-50/50">
+        <h2 className="text-base font-semibold font-heading text-slate-900 flex items-center">
+          <Paperclip className="w-5 h-5 mr-2 text-slate-500" /> Intro letters (PDF attachments)
+        </h2>
+        <p className="text-xs text-slate-500 mt-1">Replace the PDF letters that auto-attach to outreach emails. The new file keeps the same name, so nothing else needs changing.</p>
+      </div>
+      <div className="p-4 space-y-2">
+        {msg && <p className="text-xs text-slate-600 bg-slate-50 border border-slate-200 rounded px-3 py-2">{msg}</p>}
+
+        <div className="px-4 py-3 border border-slate-200 rounded-lg">
+          <div className="text-sm font-semibold text-slate-800 mb-2">Registry letter <span className="font-normal text-slate-500">(each person has their own)</span></div>
+          <div className="flex items-center gap-2 flex-wrap">
+            <select value={repName} onChange={e => setRepName(e.target.value)} className="text-sm border border-slate-300 rounded p-2 focus:outline-none focus:ring-1 focus:ring-brand-orange">
+              <option value="">Choose a person…</option>
+              {people.map((p, i) => <option key={i} value={p.name}>{p.name}</option>)}
+            </select>
+            {repName && <a href={LETTER_BASE + 'registry/' + encodeURIComponent(repName.trim()) + '.pdf'} target="_blank" rel="noreferrer" className="text-[11px] text-brand-orange hover:underline">View current</a>}
+            <label className={btn(!repName || !!busy) + ' ml-auto'}>
+              {busy === 'Registry letter' ? 'Uploading…' : 'Replace PDF'}
+              <input type="file" accept="application/pdf" style={{ display: 'none' }} disabled={!repName || !!busy} onChange={onPick(registryPath, 'Registry letter')} />
+            </label>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between gap-3 px-4 py-3 border border-slate-200 rounded-lg">
+          <div className="min-w-0">
+            <div className="text-sm font-semibold text-slate-800">Scholarship letter</div>
+            <a href={LETTER_BASE + 'scholarship/CFT-Diploma-Scholarships-2026.pdf'} target="_blank" rel="noreferrer" className="text-[11px] text-brand-orange hover:underline">View current</a>
+          </div>
+          <label className={btn(!!busy)}>
+            {busy === 'Scholarship letter' ? 'Uploading…' : 'Replace PDF'}
+            <input type="file" accept="application/pdf" style={{ display: 'none' }} disabled={!!busy} onChange={onPick('scholarship/CFT-Diploma-Scholarships-2026.pdf', 'Scholarship letter')} />
+          </label>
+        </div>
+
+        <div className="flex items-center justify-between gap-3 px-4 py-3 border border-slate-200 rounded-lg">
+          <div className="min-w-0">
+            <div className="text-sm font-semibold text-slate-800">Sponsorship letter</div>
+            <a href={LETTER_BASE + 'Supporting_National_Climate_Resilience.pdf'} target="_blank" rel="noreferrer" className="text-[11px] text-brand-orange hover:underline">View current</a>
+          </div>
+          <label className={btn(!!busy)}>
+            {busy === 'Sponsorship letter' ? 'Uploading…' : 'Replace PDF'}
+            <input type="file" accept="application/pdf" style={{ display: 'none' }} disabled={!!busy} onChange={onPick('Supporting_National_Climate_Resilience.pdf', 'Sponsorship letter')} />
+          </label>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export const AdminSettings: React.FC = () => {
   return (
     <div className="mt-8 flex-1 w-full max-w-3xl space-y-6">
       <TeamSection />
       <TemplatesSection />
       <RepsSection />
+      <LettersSection />
     </div>
   );
 };
