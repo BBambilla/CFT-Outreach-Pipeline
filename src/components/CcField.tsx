@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
+import { supabase } from '../lib/supabase';
 
-const TEAM = [
+const FALLBACK = [
   { n: 'Geoffrey', e: 'glipman@gmail.com' }, { n: 'Olly', e: 'olly@thesunprogram.com' },
   { n: 'Bonna', e: 'bonnabambilla@gmail.com' }, { n: 'Maya', e: 'maya@thesunprogram.com' },
   { n: 'Hans', e: 'hansfr55@gmail.com' }, { n: 'Rahul', e: 'rahul@thesunprogram.com' },
@@ -10,6 +11,8 @@ const TEAM = [
   { n: 'Pratishtha (hotmail)', e: 'pratishtha_p@hotmail.com' },
 ];
 
+let cachedTeam: { n: string; e: string }[] | null = null;
+
 interface CcFieldProps {
   value: string;
   onChange: (value: string) => void;
@@ -17,6 +20,16 @@ interface CcFieldProps {
 
 export const CcField: React.FC<CcFieldProps> = ({ value, onChange }) => {
   const [input, setInput] = useState('');
+  const [team, setTeam] = useState<{ n: string; e: string }[]>(cachedTeam || FALLBACK);
+
+  useEffect(() => {
+    if (cachedTeam) return;
+    supabase.from('team_contacts').select('name,email').order('sort_order').then(
+      ({ data }) => { if (data && data.length) { const mapped = data.map((d: any) => ({ n: d.name, e: d.email })); cachedTeam = mapped; setTeam(mapped); } },
+      () => {}
+    );
+  }, []);
+
   const list = (value || '').split(/[,;]+/).map(s => s.trim()).filter(Boolean);
   const setList = (arr: string[]) => onChange(Array.from(new Set(arr)).join(', '));
   const add = (raw: string) => {
@@ -55,7 +68,7 @@ export const CcField: React.FC<CcFieldProps> = ({ value, onChange }) => {
       </div>
       <div className="flex flex-wrap items-center gap-1.5 mt-1">
         <span className="text-[11px] text-slate-400 mr-0.5">Quick Cc:</span>
-        {TEAM.map(t => (
+        {team.map(t => (
           <button key={t.e} type="button" onClick={() => add(t.e)}
             className="text-[11px] px-2 py-0.5 rounded-full border border-slate-200 bg-slate-50 text-slate-600 hover:bg-brand-orange hover:text-white hover:border-brand-orange transition-colors">
             +{t.n}
