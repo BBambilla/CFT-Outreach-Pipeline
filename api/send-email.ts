@@ -29,7 +29,7 @@ export default async function handler(req: any, res: any) {
     // replies never reach the system. Add the shared inbox to their Reply-To so a reply
     // lands in BOTH their own inbox AND the system (where it attaches to the lead).
     const CAPTURE_INBOX = 'chapters@thesunprogram.com';
-    const COORDINATORS = ['pratishtha@thesunprogram.com', 'olly@thesunprogram.com'];
+    const COORDINATORS = ['pratishtha@thesunprogram.com', 'olly@thesunprogram.com', 'glipman@thesunprogram.com'];
     const isCoordinator = COORDINATORS.includes(String(from || '').trim().toLowerCase());
 
     const resend = new Resend(process.env.RESEND_API_KEY);
