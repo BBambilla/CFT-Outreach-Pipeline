@@ -14,7 +14,8 @@ export const Navigation: React.FC = () => {
 
   const getCoordinatorName = () => {
     if (authEmail === 'pratishtha@cft-app.local') return 'Pratishtha Parajuli';
-    if (authEmail === 'olly@cft-app.local' || authEmail === 'chapters@thesunprogram.com') return 'Olly Wheatcroft';
+    if (authEmail === 'chapters@thesunprogram.com') return 'CRM Admin';
+    if (authEmail === 'olly@cft-app.local') return 'Olly Wheatcroft';
     return 'Olly Wheatcroft';
   };
   const [isInboxOpen, setIsInboxOpen] = useState(false);
