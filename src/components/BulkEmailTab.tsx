@@ -20,6 +20,8 @@ export const BulkEmailTab: React.FC = () => {
   const [newName, setNewName] = useState('');
   const [newEmail, setNewEmail] = useState('');
   const [newCountry, setNewCountry] = useState('');
+  const [newGroup, setNewGroup] = useState('CFT 2026');
+  const [groupFilter, setGroupFilter] = useState('all');
   const [recipients, setRecipients] = useState<Recipient[]>([]);
   const [subject, setSubject] = useState('');
   const [cc, setCc] = useState('');
@@ -47,11 +49,12 @@ export const BulkEmailTab: React.FC = () => {
       }
       
       if (data && data.length > 0) {
-        const mapped: Recipient[] = data.map((row: any) => ({
+        const mapped: any[] = data.map((row: any) => ({
           id: row.id || row.email,
           name: row.name || '',
           email: row.email,
           country: row.country || '',
+          group: row.group_name || 'CFT 2025',
           selected: false,
           status: 'pending'
         }));
@@ -136,9 +139,9 @@ export const BulkEmailTab: React.FC = () => {
   const addRecipients = async (list: { name: string; email: string; country: string }[]) => {
     const clean = list.filter(x => x.email.includes('@') && !recipients.some(r => r.email.toLowerCase() === x.email.toLowerCase()));
     if (clean.length === 0) return;
-    const { data, error } = await supabase.from('bulk_recipients').insert(clean.map(x => ({ name: x.name, email: x.email, country: x.country || '' }))).select();
+    const { data, error } = await supabase.from('bulk_recipients').insert(clean.map(x => ({ name: x.name, email: x.email, country: x.country || '', group_name: newGroup }))).select();
     if (error) { alert('Could not save recipient(s): ' + error.message); return; }
-    setRecipients(prev => [...prev, ...(data || []).map((row: any) => ({ id: row.id, name: row.name, email: row.email, country: row.country || '', selected: true, status: 'pending' }))]);
+    setRecipients(prev => [...prev, ...(data || []).map((row: any) => ({ id: row.id, name: row.name, email: row.email, country: row.country || '', group: row.group_name || newGroup, selected: true, status: 'pending' }))]);
   };
 
   const handleParse = () => {
@@ -211,7 +214,7 @@ export const BulkEmailTab: React.FC = () => {
   };
   
   const selectAll = (select: boolean) => {
-    setRecipients(prev => prev.map(r => ({ ...r, selected: select })));
+    setRecipients(prev => prev.map(r => ((groupFilter === 'all' || (r as any).group === groupFilter) ? { ...r, selected: select } : r)));
   };
 
   const getPersonalizedContent = (recipient: Recipient, content: string) => {
@@ -349,8 +352,24 @@ export const BulkEmailTab: React.FC = () => {
               <button onClick={() => selectAll(false)} className="text-sm text-slate-500 hover:underline font-medium">Deselect All</button>
             </div>
 
+            <div className="flex items-center gap-2 flex-wrap">
+              <label className="text-xs font-semibold text-slate-500 uppercase">Show group:</label>
+              <select value={groupFilter} onChange={(e) => setGroupFilter(e.target.value)} className="text-sm text-slate-900 border border-slate-200 rounded-lg p-2 focus:outline-none focus:ring-1 focus:border-brand-orange">
+                <option value="all">All groups</option>
+                {Array.from(new Set(recipients.map((r: any) => r.group).filter(Boolean))).map(g => (<option key={g as string} value={g as string}>{g as string}</option>))}
+              </select>
+              <span className="text-xs text-slate-400">({recipients.filter((r: any) => groupFilter === 'all' || r.group === groupFilter).length} shown)</span>
+            </div>
+
             <div className="border border-slate-200 rounded-lg p-3 space-y-3 bg-slate-50/50">
               <p className="text-xs font-semibold text-slate-500 uppercase">Add recipients (saved permanently)</p>
+              <div className="flex items-center gap-2 flex-wrap">
+                <label className="text-xs font-semibold text-slate-500">Add to group:</label>
+                <select value={newGroup} onChange={(e) => setNewGroup(e.target.value)} className="text-sm text-slate-900 border border-slate-200 rounded-lg p-2 focus:outline-none focus:ring-1 focus:border-brand-orange">
+                  <option value="CFT 2026">CFT 2026</option>
+                  <option value="CFT 2025">CFT 2025</option>
+                </select>
+              </div>
               <div className="flex items-end gap-2 flex-wrap">
                 <input value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="Full name" className="flex-1 min-w-[130px] border border-slate-200 rounded-lg p-2 text-sm focus:outline-none focus:border-brand-orange focus:ring-1 focus:ring-brand-orange" />
                 <input value={newEmail} onChange={(e) => setNewEmail(e.target.value)} placeholder="email@domain.com" className="flex-1 min-w-[160px] border border-slate-200 rounded-lg p-2 text-sm focus:outline-none focus:border-brand-orange focus:ring-1 focus:ring-brand-orange" />
@@ -365,7 +384,7 @@ export const BulkEmailTab: React.FC = () => {
             </div>
             
             <div className="max-h-64 overflow-y-auto border border-slate-200 rounded-lg divide-y divide-slate-100">
-              {recipients.map(r => (
+              {recipients.filter((r: any) => groupFilter === 'all' || r.group === groupFilter).map(r => (
                 <div key={r.id} className="flex items-center gap-3 p-3 hover:bg-slate-50 transition-colors">
                   <button onClick={() => toggleRecipient(r.id)} className="text-slate-400 hover:text-brand-orange">
                     {r.selected ? <CheckSquare className="w-5 h-5 text-brand-orange" /> : <Square className="w-5 h-5" />}
