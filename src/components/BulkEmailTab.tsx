@@ -20,6 +20,7 @@ export const BulkEmailTab: React.FC = () => {
   const [recipients, setRecipients] = useState<Recipient[]>([]);
   const [subject, setSubject] = useState('');
   const [cc, setCc] = useState('');
+  const [sendAs, setSendAs] = useState<'self' | 'geoffrey'>('self');
   const [body, setBody] = useState('');
   const [attachments, setAttachments] = useState<{filename: string, url: string}[]>([]);
   const [isUploading, setIsUploading] = useState(false);
@@ -71,10 +72,27 @@ export const BulkEmailTab: React.FC = () => {
         finalFromName = 'Olly Wheatcroft';
       }
     }
+    if (sendAs === 'geoffrey') {
+      finalFrom = 'glipman@thesunprogram.com';
+      finalFromName = 'Professor Geoffrey Lipman';
+    }
     return { finalFrom, finalFromName };
   };
 
   const getSignature = () => {
+    if (sendAs === 'geoffrey') {
+      return {
+        html: `<div style="font-family:Arial,sans-serif;font-size:10.5pt;line-height:1.2;color:#808080;margin-top:16px;">
+  <div>Professor Geoffrey Lipman</div>
+  <div>Creative Disruption Architect,</div>
+  <div><strong>The SUN<sup>x</sup> Program</strong></div>
+  <div><a href="mailto:glipman@thesunprogram.com" style="color:#1155cc;">glipman@thesunprogram.com</a></div>
+  <div>+32495250789</div>
+  <div style="margin-top:10px;"><a href="https://youtu.be/QW3byaVLrZM" style="color:#1155cc;">3 min Video About SUNx</a></div>
+</div>`,
+        plain: `Professor Geoffrey Lipman\nCreative Disruption Architect,\nThe SUNx Program\nglipman@thesunprogram.com\n+32495250789\n3 min Video About SUNx: https://youtu.be/QW3byaVLrZM`
+      };
+    }
     if (role === 'student' || role === 'rep') {
       return {
         html: `<div style="font-family:Arial,sans-serif;font-size:10.5pt;line-height:1.2;color:#808080;margin-top:16px;">
@@ -346,6 +364,15 @@ export const BulkEmailTab: React.FC = () => {
               Use <code className="bg-slate-100 px-1 py-0.5 rounded">[Name]</code> and <code className="bg-slate-100 px-1 py-0.5 rounded">[Country]</code> to personalize.
             </p>
             
+            {role === 'coordinator' && (
+              <div className="flex items-center gap-2 mb-3">
+                <label className="text-xs font-semibold text-slate-500 uppercase">Send as:</label>
+                <select value={sendAs} onChange={(e) => setSendAs(e.target.value as 'self' | 'geoffrey')} className="text-sm text-slate-900 border border-slate-200 rounded-lg p-2 focus:outline-none focus:ring-1 focus:border-brand-orange">
+                  <option value="self">Myself</option>
+                  <option value="geoffrey">Professor Geoffrey Lipman</option>
+                </select>
+              </div>
+            )}
             <input 
               type="text"
               placeholder="Subject"
