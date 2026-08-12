@@ -17,6 +17,9 @@ interface Recipient {
 export const BulkEmailTab: React.FC = () => {
   const { authEmail, role, currentUser } = useAppContext();
   const [pasteData, setPasteData] = useState('');
+  const [newName, setNewName] = useState('');
+  const [newEmail, setNewEmail] = useState('');
+  const [newCountry, setNewCountry] = useState('');
   const [recipients, setRecipients] = useState<Recipient[]>([]);
   const [subject, setSubject] = useState('');
   const [cc, setCc] = useState('');
@@ -130,6 +133,14 @@ export const BulkEmailTab: React.FC = () => {
     }
   };
 
+  const addRecipients = async (list: { name: string; email: string; country: string }[]) => {
+    const clean = list.filter(x => x.email.includes('@') && !recipients.some(r => r.email.toLowerCase() === x.email.toLowerCase()));
+    if (clean.length === 0) return;
+    const { data, error } = await supabase.from('bulk_recipients').insert(clean.map(x => ({ name: x.name, email: x.email, country: x.country || '' }))).select();
+    if (error) { alert('Could not save recipient(s): ' + error.message); return; }
+    setRecipients(prev => [...prev, ...(data || []).map((row: any) => ({ id: row.id, name: row.name, email: row.email, country: row.country || '', selected: true, status: 'pending' }))]);
+  };
+
   const handleParse = () => {
     if (!pasteData.trim()) return;
     const lines = pasteData.split(/\r?\n/);
@@ -167,7 +178,7 @@ export const BulkEmailTab: React.FC = () => {
       }
     });
     
-    setRecipients(prev => [...prev, ...parsed]);
+    addRecipients(parsed); setPasteData('');
   };
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -337,6 +348,21 @@ export const BulkEmailTab: React.FC = () => {
               <button onClick={() => selectAll(true)} className="text-sm text-brand-orange hover:underline font-medium">Select All</button>
               <button onClick={() => selectAll(false)} className="text-sm text-slate-500 hover:underline font-medium">Deselect All</button>
             </div>
+
+            <div className="border border-slate-200 rounded-lg p-3 space-y-3 bg-slate-50/50">
+              <p className="text-xs font-semibold text-slate-500 uppercase">Add recipients (saved permanently)</p>
+              <div className="flex items-end gap-2 flex-wrap">
+                <input value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="Full name" className="flex-1 min-w-[130px] border border-slate-200 rounded-lg p-2 text-sm focus:outline-none focus:border-brand-orange focus:ring-1 focus:ring-brand-orange" />
+                <input value={newEmail} onChange={(e) => setNewEmail(e.target.value)} placeholder="email@domain.com" className="flex-1 min-w-[160px] border border-slate-200 rounded-lg p-2 text-sm focus:outline-none focus:border-brand-orange focus:ring-1 focus:ring-brand-orange" />
+                <input value={newCountry} onChange={(e) => setNewCountry(e.target.value)} placeholder="Country (optional)" className="flex-1 min-w-[110px] border border-slate-200 rounded-lg p-2 text-sm focus:outline-none focus:border-brand-orange focus:ring-1 focus:ring-brand-orange" />
+                <button onClick={() => { addRecipients([{ name: newName.trim(), email: newEmail.trim(), country: newCountry.trim() }]); setNewName(''); setNewEmail(''); setNewCountry(''); }} className="bg-brand-orange text-white px-4 py-2 rounded-md font-medium text-sm hover:opacity-90 whitespace-nowrap">+ Add person</button>
+              </div>
+              <div>
+                <p className="text-xs text-slate-500 mb-1">Or paste a list — one per line, <code className="bg-slate-100 px-1 rounded">Country, Full Name, Email</code>:</p>
+                <textarea value={pasteData} onChange={(e) => setPasteData(e.target.value)} placeholder="India, Priya Sharma, priya@email.com" className="w-full h-24 border border-slate-200 rounded-lg p-2 text-sm focus:outline-none focus:border-brand-orange focus:ring-1 focus:ring-brand-orange" />
+                <button onClick={handleParse} className="mt-1 bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-md font-medium text-sm transition-colors">Add pasted list</button>
+              </div>
+            </div>
             
             <div className="max-h-64 overflow-y-auto border border-slate-200 rounded-lg divide-y divide-slate-100">
               {recipients.map(r => (
@@ -432,8 +458,8 @@ export const BulkEmailTab: React.FC = () => {
           </div>
         )}
         
-        {/* Add Extra Recipients */}
-        {!isSending && !sendComplete && (
+        {/* Add Extra Recipients (moved into Select Recipients above) */}
+        {false && !isSending && !sendComplete && (
           <div className="space-y-4 pt-4 border-b border-slate-200 pb-6">
             <button 
               onClick={() => setIsAddExtraOpen(!isAddExtraOpen)}
