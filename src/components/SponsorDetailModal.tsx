@@ -39,6 +39,7 @@ export const SponsorDetailModal: React.FC<{ sponsorId: string, onClose: () => vo
   const [draftEmail, setDraftEmail] = useState<string>('');
   const [draftSubject, setDraftSubject] = useState<string>('');
   const [draftCc, setDraftCc] = useState<string>('');
+  const [sendAs, setSendAs] = useState<'self' | 'geoffrey'>('self');
   const [draftAttachments, setDraftAttachments] = useState<{filename: string, url?: string, content?: string}[]>([]);
   const [isSendingEmail, setIsSendingEmail] = useState(false);
   const [emailError, setEmailError] = useState<string>('');
@@ -192,6 +193,19 @@ Best wishes,`;
   };
 
   const getSignature = () => {
+    if (sendAs === 'geoffrey') {
+      return {
+        html: `<div style="font-family:Arial,sans-serif;font-size:10.5pt;line-height:1.2;color:#808080;margin-top:16px;">
+  <div>Professor Geoffrey Lipman</div>
+  <div>Creative Disruption Architect,</div>
+  <div><strong>The SUN<sup>x</sup> Program</strong></div>
+  <div><a href="mailto:glipman@thesunprogram.com" style="color:#1155cc;">glipman@thesunprogram.com</a></div>
+  <div>+32495250789</div>
+  <div style="margin-top:10px;"><a href="https://youtu.be/QW3byaVLrZM" style="color:#1155cc;">3 min Video About SUNx</a></div>
+</div>`,
+        plain: `Professor Geoffrey Lipman\nCreative Disruption Architect,\nThe SUNx Program\nglipman@thesunprogram.com\n+32495250789\n3 min Video About SUNx: https://youtu.be/QW3byaVLrZM`
+      };
+    }
     const isRep = role !== 'coordinator';
     if (isRep) {
       return {
@@ -624,6 +638,15 @@ Best wishes,`;
                               placeholder="Subject"
                               className="w-full text-sm text-slate-900 border border-slate-200 rounded-md p-2 focus:outline-none focus:ring-1 focus:border-brand-orange font-medium"
                             />
+                            {role === 'coordinator' && (
+                              <div className="flex items-center gap-2">
+                                <label className="text-xs font-semibold text-slate-500 uppercase">Send as:</label>
+                                <select value={sendAs} onChange={(e) => setSendAs(e.target.value as 'self' | 'geoffrey')} className="text-sm text-slate-900 border border-slate-200 rounded-md p-2 focus:outline-none focus:ring-1 focus:border-brand-orange">
+                                  <option value="self">Myself</option>
+                                  <option value="geoffrey">Professor Geoffrey Lipman</option>
+                                </select>
+                              </div>
+                            )}
                             <CcField value={draftCc} onChange={setDraftCc} />
                             <textarea 
                               value={draftEmail}
@@ -711,6 +734,10 @@ Best wishes,`;
                                         finalFrom = 'olly@thesunprogram.com';
                                         finalFromName = 'Olly Wheatcroft';
                                       }
+                                    }
+                                    if (sendAs === 'geoffrey') {
+                                      finalFrom = 'glipman@thesunprogram.com';
+                                      finalFromName = 'Professor Geoffrey Lipman';
                                     }
 
                                     const response = await fetch('/api/send-email', {
