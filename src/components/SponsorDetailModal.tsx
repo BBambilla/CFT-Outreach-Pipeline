@@ -730,6 +730,9 @@ Best wishes,`;
 
                                     if (response.ok) {
                                       const respData = await response.json();
+                                      if (respData.dropped && respData.dropped.length) {
+                                        alert(`⚠️ The email was sent, but the attachment "${respData.dropped.join('", "')}" could not be found and was NOT attached.\n\nAsk an admin to upload the missing letter (Settings → Intro letters), then resend.`);
+                                      }
                                       const notes = respData.notes ? ` (Notes: ${respData.notes.join(', ')})` : '';
                                       const emailTo = sponsor.email || 'unknown';
                                       addInteraction({ 
