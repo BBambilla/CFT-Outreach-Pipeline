@@ -3,6 +3,7 @@ import { useAppContext } from '../context/AppContext';
 import { supabase } from '../lib/supabase';
 import { Mail, CheckSquare, Square, Paperclip, X, AlertCircle, Play, Send } from 'lucide-react';
 import { CcField } from './CcField';
+import { RichTextEditor } from './RichTextEditor';
 
 interface Recipient {
   id: string;
@@ -234,20 +235,8 @@ export const BulkEmailTab: React.FC = () => {
   };
 
   const generateHtml = (text: string) => {
-    let htmlContent = text
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" style="color:#1155cc;">$1</a>')
-      .replace(/\*\*(?=\S)([^*\n]*?\S)\*\*/g, '<strong>$1</strong>')
-      .replace(/\*(?=\S)([^*\n]*?\S)\*/g, '<em>$1</em>')
-      .replace(/(?<!["'])(https?:\/\/[^\s"']+)/g, '<a href="$1" style="color:#1155cc;">$1</a>')
-      .replace(/\n/g, '<br>');
-    
-    htmlContent = htmlContent.replace(/(?:<br>- (.*?))+(?=<br>|$)/g, (match) => {
-      const items = match.split('<br>- ').filter(Boolean).map(item => `<li>${item}</li>`).join('');
-      return `<br><ul style="margin-top:8px;margin-bottom:8px;padding-left:24px;list-style-type:disc;">${items}</ul>`;
-    });
-    
+    let htmlContent = text;
+
     const sig = getSignature();
     return `<div style="font-family:Arial,sans-serif;font-size:11pt;line-height:1.4;color:#222;">${htmlContent}</div>${sig.html}`;
   };
@@ -427,12 +416,7 @@ export const BulkEmailTab: React.FC = () => {
             />
             <CcField value={cc} onChange={setCc} />
             
-            <textarea
-              className="w-full h-64 border border-slate-200 rounded-lg p-3 text-sm focus:outline-none focus:border-brand-orange focus:ring-1 focus:ring-brand-orange"
-              placeholder="Message body..."
-              value={body}
-              onChange={(e) => setBody(e.target.value)}
-            />
+            <RichTextEditor value={body} onChange={setBody} placeholder="Message body..." />
             
             <div className="bg-slate-50 border border-slate-200 rounded-lg p-4">
               <p className="text-sm font-medium text-slate-700 mb-2">Signature (added automatically to every email):</p>

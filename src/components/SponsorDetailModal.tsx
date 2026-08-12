@@ -4,6 +4,7 @@ import { Interaction, SponsorStatus, InboundMessage } from '../types';
 import { supabase } from '../lib/supabase';
 import { X, Search, Sparkles, Send, FileText, ChevronRight, PenSquare, ArrowRight, Trash2, AlertCircle, CheckCircle2, Paperclip } from 'lucide-react';
 import { CcField } from './CcField';
+import { RichTextEditor } from './RichTextEditor';
 
 export const SponsorDetailModal: React.FC<{ sponsorId: string, onClose: () => void }> = ({ sponsorId, onClose }) => {
   const { sponsors, updateSponsor, deleteSponsor, addInteraction, interactions, templates, resources, currentUser, students, role, authEmail } = useAppContext();
@@ -648,12 +649,7 @@ Best wishes,`;
                               </div>
                             )}
                             <CcField value={draftCc} onChange={setDraftCc} />
-                            <textarea 
-                              value={draftEmail}
-                              onChange={(e) => setDraftEmail(e.target.value)}
-                              rows={10}
-                              className="w-full text-sm text-slate-900 border border-slate-200 rounded-md p-3 focus:outline-none focus:ring-1 focus:border-brand-orange leading-relaxed"
-                            />
+                            <RichTextEditor value={draftEmail} onChange={setDraftEmail} placeholder="Write your message..." />
                             <div className="mt-2 p-3 bg-gray-50 border border-gray-200 rounded-md text-sm text-gray-500 font-sans" dangerouslySetInnerHTML={{ __html: getSignature().html }} />
                             {draftAttachments.length > 0 && (
                               <div className="flex flex-wrap gap-2 text-sm text-slate-600 bg-slate-50 p-2 rounded-md border border-slate-200">
@@ -705,23 +701,11 @@ Best wishes,`;
                                   setIsSendingEmail(true);
                                   setEmailError('');
                                   try {
-                                    let htmlContent = draftEmail
-                                      .replace(/</g, '&lt;')
-                                      .replace(/>/g, '&gt;')
-                                      .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" style="color:#1155cc;">$1</a>')
-                                      .replace(/\*\*(?=\S)([^*\n]*?\S)\*\*/g, '<strong>$1</strong>')
-                                      .replace(/\*(?=\S)([^*\n]*?\S)\*/g, '<em>$1</em>')
-                                      .replace(/(?<!["'])(https?:\/\/[^\s"']+)/g, '<a href="$1" style="color:#1155cc;">$1</a>')
-                                      .replace(/\n/g, '<br>');
-                                    
-                                    htmlContent = htmlContent.replace(/(?:<br>- (.*?))+(?=<br>|$)/g, (match) => {
-                                      const items = match.split('<br>- ').filter(Boolean).map(item => `<li>${item}</li>`).join('');
-                                      return `<br><ul style="margin-top:8px;margin-bottom:8px;padding-left:24px;list-style-type:disc;">${items}</ul>`;
-                                    });
+                                    let htmlContent = draftEmail;
 
                                     const sig = getSignature();
                                     const formattedHtml = `<div style="font-family:Arial,sans-serif;font-size:11pt;line-height:1.4;color:#222;">${htmlContent}</div>${sig.html}`;
-                                    const plainText = `${draftEmail}\n\n${sig.plain}`;
+                                    const plainText = `${draftEmail.replace(/<[^>]+>/g, ' ')}\n\n${sig.plain}`;
 
                                     let finalFrom = currentUser?.email || 'noreply@climatefriendlytravel.com';
                                     let finalFromName = currentUser?.name || 'Climate Friendly Travel';
