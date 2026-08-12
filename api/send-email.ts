@@ -43,19 +43,28 @@ export default async function handler(req: any, res: any) {
     if (html) emailOptions.html = html;
     if (ccList.length > 0) emailOptions.cc = ccList;
 
+    const dropped: string[] = [];
     if (Array.isArray(attachments) && attachments.length > 0) {
-      emailOptions.attachments = attachments.map((a: any) =>
-        a && a.content
-          ? { filename: a.filename, content: a.content }
-          : { filename: a.filename, path: a.path || a.url }
-      );
+      const valid: any[] = [];
+      for (const a of attachments) {
+        if (a && a.content) { valid.push({ filename: a.filename, content: a.content }); continue; }
+        const url = a && (a.path || a.url);
+        if (!url) continue;
+        let reachable = true;
+        try {
+          if (typeof fetch === 'function') { const head = await fetch(url, { method: 'HEAD' }); reachable = head.ok; }
+        } catch (_e) { reachable = false; }
+        if (reachable) valid.push({ filename: a.filename, path: url });
+        else dropped.push(a.filename || url);
+      }
+      if (valid.length > 0) emailOptions.attachments = valid;
     }
 
     const { data, error } = await resend.emails.send(emailOptions);
     if (error) {
       return res.status(502).json({ ok: false, error: (error as any)?.message || 'Email service error' });
     }
-    return res.status(200).json({ ok: true, id: data?.id });
+    return res.status(200).json({ ok: true, id: data?.id, dropped });
   } catch (e: any) {
     return res.status(500).json({ ok: false, error: e?.message || 'Failed to send email' });
   }
