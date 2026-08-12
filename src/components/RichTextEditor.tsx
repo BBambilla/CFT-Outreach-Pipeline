@@ -1,5 +1,5 @@
 import React, { useRef, useEffect } from 'react';
-import { Bold, Italic, Link2, Type } from 'lucide-react';
+import { Bold, Italic, Link2, Type, List } from 'lucide-react';
 
 interface Props {
   value: string;
@@ -42,11 +42,12 @@ export const RichTextEditor: React.FC<Props> = ({ value, onChange, placeholder }
 
   return (
     <div className="border border-slate-200 rounded-lg overflow-hidden">
-      <style>{`[data-rte]:empty:before{content:attr(data-ph);color:#94a3b8;}`}</style>
+      <style>{`[data-rte]:empty:before{content:attr(data-ph);color:#94a3b8;} [data-rte] ul { list-style-type: disc; padding-left: 1.5rem; margin-top: 0.5rem; margin-bottom: 0.5rem; } [data-rte] ol { list-style-type: decimal; padding-left: 1.5rem; margin-top: 0.5rem; margin-bottom: 0.5rem; }`}</style>
       <div className="flex items-center gap-1 flex-wrap border-b border-slate-200 bg-slate-50 px-2 py-1.5">
         <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => exec('bold')} className={tbBtn} title="Bold"><Bold size={15} /></button>
         <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => exec('italic')} className={tbBtn} title="Italic"><Italic size={15} /></button>
         <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={addLink} className={tbBtn} title="Add link"><Link2 size={15} /></button>
+        <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => exec('insertUnorderedList')} className={tbBtn} title="Bullet List"><List size={15} /></button>
         <span className="w-px h-5 bg-slate-300 mx-1" />
         <Type size={15} className="text-slate-400" />
         {COLORS.map((c) => (
